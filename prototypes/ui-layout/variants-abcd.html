@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PROTOTYPE: webMCP-comparer UI layout</title>
+<!--
+  PROTOTYPE (throwaway): three variants of the Live and Results sections on the agreed single page
+  (sidebar + Setup + Live + Results), switchable via ?variant=A|B|C and the bottom bar.
+  Run data is simulated; frames are real demo shop screenshots.
+-->
+<style>
+  :root { --bl: #6b7280; --wm: #2563eb; --ok: #15803d; --bad: #b91c1c; --line: #e5e7eb; --soft: #f8fafc; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.45 system-ui, sans-serif; color: #111827; display: flex; min-height: 100vh; }
+  aside { width: 230px; flex: none; border-right: 1px solid var(--line); background: var(--soft); padding: 14px; position: sticky; top: 0; height: 100vh; overflow: auto; transition: width .2s; }
+  aside.closed { width: 44px; padding: 14px 8px; }
+  aside.closed .list, aside.closed h3 { display: none; }
+  aside h3 { margin: 0 0 10px; font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: #6b7280; }
+  .run-item { border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 8px; margin-bottom: 8px; font-size: 12px; }
+  .run-item b { display: block; font-size: 13px; }
+  .run-item button { font-size: 11px; padding: 2px 8px; margin: 4px 4px 0 0; }
+  main { flex: 1; min-width: 0; padding: 0 28px 120px; }
+  section { padding: 24px 0; border-bottom: 1px solid var(--line); }
+  section > h2 { margin: 0 0 14px; font-size: 18px; }
+  section > h2 small { font-weight: 400; color: #6b7280; font-size: 13px; margin-left: 8px; }
+  .muted { color: #6b7280; }
+  .setup { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
+  .setup label { display: block; font-weight: 600; margin: 10px 0 4px; font-size: 13px; }
+  .setup input, .setup select { width: 100%; padding: 7px; border: 1px solid #d1d5db; border-radius: 6px; font: inherit; }
+  textarea { width: 100%; height: 230px; font: 12px/1.5 ui-monospace, monospace; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; background: #0f172a; color: #e2e8f0; }
+  .valid { color: var(--ok); font-size: 12px; margin-top: 4px; }
+  .checks label { font-weight: 400; display: flex; gap: 8px; align-items: center; margin: 4px 0; }
+  .checks input { width: auto; }
+  .row { display: flex; gap: 10px; }
+  .row > div { flex: 1; }
+  .btn { background: #111827; color: #fff; border: 0; border-radius: 8px; padding: 10px 22px; font-size: 15px; cursor: pointer; }
+  .btn.stop { background: var(--bad); }
+  .btn:disabled { opacity: .4; cursor: default; }
+  .locked { opacity: .55; pointer-events: none; }
+  .tag { display: inline-block; font-size: 11px; padding: 1px 8px; border-radius: 99px; font-weight: 600; }
+  .tag.bl { background: #e5e7eb; color: #374151; } .tag.wm { background: #dbeafe; color: #1d4ed8; }
+  .tag.pass { background: #dcfce7; color: var(--ok); } .tag.fail { background: #fee2e2; color: var(--bad); } .tag.run { background: #fef9c3; color: #854d0e; }
+  .frame { width: 100%; aspect-ratio: 16/10; background: #f3f4f6 center/cover no-repeat; border: 1px solid var(--line); border-radius: 8px; }
+  table { border-collapse: collapse; width: 100%; }
+  th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
+  th { font-size: 12px; color: #6b7280; font-weight: 600; }
+  .feed { font: 12px/1.6 ui-monospace, monospace; max-height: 180px; overflow: auto; border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; background: var(--soft); }
+  .feed div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .feed .wmtool { color: var(--wm); font-weight: 600; }
+  .scen-pick { margin-bottom: 10px; }
+  #switcher { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: #111; color: #fff; border-radius: 99px; padding: 8px 14px; display: flex; gap: 14px; align-items: center; box-shadow: 0 6px 24px #0005; z-index: 9; font-size: 13px; }
+  #switcher button { background: #333; color: #fff; border: 0; border-radius: 99px; width: 28px; height: 28px; cursor: pointer; }
+  .hidden { display: none; }
+
+  /* Variant A: twin columns */
+  .a-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .a-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .a-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 10px 0; }
+  .a-tile { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
+  .a-tile span { display: block; font-size: 11px; color: #6b7280; }
+  .a-tile b { font-size: 18px; font-variant-numeric: tabular-nums; }
+
+  /* Variant B: scoreboard */
+  .b-grid { display: grid; grid-template-columns: 1fr 260px 1fr; gap: 16px; align-items: start; }
+  .b-board { border: 2px solid #111827; border-radius: 12px; overflow: hidden; }
+  .b-board .r { display: grid; grid-template-columns: 1fr 90px 1fr; text-align: center; border-bottom: 1px solid var(--line); padding: 8px 4px; font-variant-numeric: tabular-nums; }
+  .b-board .r:last-child { border: 0; }
+  .b-board .r span { font-size: 11px; color: #6b7280; align-self: center; }
+  .b-board .r b { font-size: 17px; }
+  .b-board .hd { background: #111827; color: #fff; font-weight: 700; }
+  .b-board .hd b { font-size: 13px; }
+  .lower { color: var(--ok); }
+  .b-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
+  .chip { font: 12px ui-monospace, monospace; border: 1px solid var(--line); border-radius: 99px; padding: 2px 9px; background: #fff; }
+  .chip.wmtool { border-color: #93c5fd; color: var(--wm); }
+  .bars .metric { margin: 14px 0; }
+  .bars .bar { height: 18px; border-radius: 4px; margin: 3px 0; display: flex; align-items: center; padding-left: 8px; font-size: 12px; color: #fff; white-space: nowrap; }
+
+  /* Variant C: timeline */
+  .c-frames { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  .c-frames .frame { aspect-ratio: 16/9; }
+  .c-line { margin-top: 18px; border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+  .c-track { position: relative; height: 34px; border-bottom: 1px dashed var(--line); }
+  .c-track .lbl { position: absolute; left: 0; top: 7px; width: 90px; font-weight: 600; font-size: 12px; }
+  .c-track .area { position: absolute; left: 100px; right: 0; top: 0; bottom: 0; }
+  .c-dot { position: absolute; top: 6px; transform: translateX(-50%); font: 11px ui-monospace, monospace; padding: 2px 6px; border-radius: 6px; background: #e5e7eb; white-space: nowrap; }
+  .c-dot.wmtool { background: #dbeafe; color: #1d4ed8; }
+  .c-dot.fin { background: #111827; color: #fff; }
+  .c-axis { position: relative; margin-left: 100px; height: 18px; font-size: 11px; color: #6b7280; }
+  .c-axis span { position: absolute; transform: translateX(-50%); }
+  .c-now { position: absolute; top: 0; bottom: 0; width: 2px; background: #f59e0b; }
+  .c-stats { display: flex; gap: 18px; font-variant-numeric: tabular-nums; flex-wrap: wrap; }
+  .c-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
+  .c-card { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
+  .c-card h4 { margin: 0 0 8px; display: flex; justify-content: space-between; }
+
+  /* Variant D: chosen mix */
+  .d-cols { display: grid; grid-template-columns: 1fr 1fr; }
+  .d-cols > div { padding: 0 20px; }
+  .d-cols > div:first-child { padding-left: 0; border-right: 2px solid #d1d5db; }
+  .d-cols > div:last-child { padding-right: 0; }
+  .d-board { max-width: 560px; margin: 18px auto; }
+  .d-scen { margin-top: 12px; border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; }
+  .d-scen summary { cursor: pointer; }
+  .d-out { margin: 4px 0 0 18px; font-size: 13px; }
+  .brow { display: flex; align-items: center; gap: 8px; margin: 3px 0; font-size: 12px; font-variant-numeric: tabular-nums; }
+  .brow .bar { margin: 0; padding: 0; min-width: 3px; }
+  .brow span { font-weight: 600; }
+  .higher { color: var(--bad); }
+  .legend { display: flex; gap: 18px; align-items: center; font-size: 13px; margin-bottom: 6px; }
+  .legend i { display: inline-block; width: 14px; height: 14px; border-radius: 3px; vertical-align: -2px; margin-right: 6px; }
+</style>
+</head>
+<body>
+<aside id="side">
+  <button onclick="side.classList.toggle('closed')" title="Collapse">☰</button>
+  <h3 style="margin-top:12px">Past Runs</h3>
+  <div class="list">
+    <div class="run-item"><b>Today 14:30</b>localhost:4000 · Haiku 5.5<br>Baseline 3/4 · WebMCP 4/4<br><button>Open</button><button>Zip ⬇</button></div>
+    <div class="run-item"><b>Today 11:02</b>shop.example.com · gpt-6-luna<br>Baseline 2/4 · WebMCP 4/4<br><button>Open</button><button>Zip ⬇</button></div>
+    <div class="run-item"><b>Yesterday 17:45</b>localhost:4000 · Sonnet 5.5<br>Baseline 4/4 · WebMCP 4/4<br><button>Open</button><button>Zip ⬇</button></div>
+  </div>
+</aside>
+
+<main>
+  <section id="setup">
+    <h2>① Setup</h2>
+    <div class="setup">
+      <div>
+        <label>Site URL</label><input value="http://localhost:4000">
+        <label>Suite <span class="muted" style="font-weight:400">· <a href="#">Upload .yaml</a> or edit below</span></label>
+        <textarea spellcheck="false">scenarios:
+  - id: cheapest-red-shirt-price
+    prompt: What does the cheapest red shirt cost?
+    success:
+      - answerContains: "19.99"
+  - id: add-red-shirt-to-cart
+    prompt: Add the cheapest red shirt in size M to the cart.
+    success:
+      - script: "shop.cart().some(i => i.productId === 'red-shirt-basic' &amp;&amp; i.size === 'M')"
+  - id: add-from-product-page
+    path: /products/blue-sneakers
+    prompt: Add these sneakers in size 42 to the cart.
+  - id: full-checkout
+    prompt: Buy one black hat and check out as Jane Doe ...</textarea>
+        <div class="valid">✔ Valid Suite, 4 Scenarios</div>
+      </div>
+      <div>
+        <label>Scenarios <span class="muted" style="font-weight:400">· <a href="#">Select all</a> · <a href="#">Select none</a></span></label>
+        <div class="checks">
+          <label><input type="checkbox" checked> cheapest-red-shirt-price</label>
+          <label><input type="checkbox" checked> add-red-shirt-to-cart</label>
+          <label><input type="checkbox"> add-from-product-page</label>
+          <label><input type="checkbox"> full-checkout</label>
+        </div>
+        <div class="row">
+          <div><label>Provider</label><select><option>Anthropic</option><option>OpenAI</option></select></div>
+          <div><label>Model</label><select><option>Haiku 5.5 (recommended)</option><option>Sonnet 5.5 (ok)</option><option>Opus 5.5 (not recommended)</option></select></div>
+        </div>
+        <label>API key</label><input value="Key loaded from .env ✔" disabled>
+        <div class="row">
+          <div><label>Repeat</label><input value="1"></div>
+          <div><label>Max steps</label><input value="50"></div>
+          <div><label>Max minutes</label><input value="5"></div>
+          <div><label>Max $</label><input value="2.00"></div>
+        </div>
+        <p><button class="btn" id="runBtn" onclick="startRun()">Run ▶</button></p>
+      </div>
+    </div>
+  </section>
+
+  <section id="live" class="hidden">
+    <h2>② Live <small id="liveTitle"></small></h2>
+    <div id="liveBody"></div>
+    <p><button class="btn stop" id="stopBtn" onclick="finish(true)">Stop</button></p>
+  </section>
+
+  <section id="results" class="hidden">
+    <h2>③ Results</h2>
+    <div id="resultsBody"></div>
+  </section>
+</main>
+
+<div id="switcher">
+  <button onclick="cycle(-1)">←</button><span id="vlabel"></span><button onclick="cycle(1)">→</button>
+</div>
+
+<script>
+// ---------- simulated Run ----------
+const SCEN = ['cheapest-red-shirt-price', 'add-red-shirt-to-cart'];
+const SCRIPTS = {
+  baseline: [
+    [0.6, 'model', 3100], [0.7, 'screenshot', {}, 'home'], [1.6, 'model', 4600], [1.7, 'read_page', {}],
+    [2.8, 'model', 7900], [2.9, 'type', { selector: 'input[name=query]', text: 'shirt' }], [3.0, 'select', { selector: 'select[name=color]', value: 'red' }],
+    [3.1, 'click', { text: 'Search' }, 'search'], [4.2, 'model', 8800], [4.3, 'screenshot', {}],
+    [5.4, 'model', 10400], [5.5, 'click', { text: 'Red shirt basic' }, 'product'], [6.6, 'model', 11900], [6.7, 'screenshot', {}],
+    [7.8, 'model', 13600], [7.9, 'select', { selector: 'select[name=size]', value: 'M' }], [8.0, 'click', { text: 'Add to cart' }, 'added'],
+    [9.1, 'model', 15200], [9.2, 'screenshot', {}], [10.3, 'model', 16100], [10.4, 'finish', { success: true }],
+  ],
+  webmcp: [
+    [0.6, 'model', 3900], [0.7, 'search_products', { query: 'shirt', color: 'red' }],
+    [1.7, 'model', 4700], [1.8, 'add_to_cart', { productId: 'red-shirt-basic', size: 'M' }, 'home-cart1'],
+    [2.8, 'model', 5300], [2.9, 'finish', { success: true }],
+  ],
+};
+const WEBMCP_TOOLS = ['search_products', 'add_to_cart', 'get_product', 'view_cart', 'checkout'];
+const PRICE_IN = 0.10 / 1e6, PRICE_OUT = 0.50 / 1e6;
+let state, timer, t0;
+
+function fresh() {
+  const lane = () => ({ t: 0, steps: 0, tokens: 0, cost: 0, tools: {}, shots: 0, frame: 'home', feed: [], done: false });
+  return { baseline: lane(), webmcp: lane(), scenario: SCEN[1], running: false };
+}
+state = fresh();
+
+function startRun() {
+  state = fresh(); state.running = true; t0 = performance.now();
+  document.getElementById('setup').classList.add('locked');
+  show('live'); hide('results'); scrollTo('live');
+  document.getElementById('stopBtn').disabled = false;
+  const idx = { baseline: 0, webmcp: 0 };
+  clearInterval(timer);
+  timer = setInterval(() => {
+    const now = (performance.now() - t0) / 1000;
+    for (const lane of ['baseline', 'webmcp']) {
+      const L = state[lane], ev = SCRIPTS[lane];
+      if (!L.done) L.t = now;
+      while (idx[lane] < ev.length && ev[idx[lane]][0] <= now) {
+        const [at, kind, arg, frame] = ev[idx[lane]++];
+        if (kind === 'model') { L.steps++; L.tokens += arg + 140; L.cost += arg * PRICE_IN + 140 * PRICE_OUT; }
+        else if (kind === 'finish') { L.done = true; L.t = at; L.outcome = 'pass'; L.feed.push({ at, tool: 'finish', input: arg }); }
+        else {
+          L.tools[kind] = (L.tools[kind] || 0) + 1; L.feed.push({ at, tool: kind, input: arg });
+          if (kind === 'screenshot') L.shots++;
+          if (frame) L.frame = frame;
+        }
+      }
+    }
+    render();
+    if (state.baseline.done && state.webmcp.done) finish(false);
+  }, 100);
+}
+
+function finish(stopped) {
+  clearInterval(timer); state.running = false; state.stopped = stopped;
+  for (const lane of ['baseline', 'webmcp']) if (!state[lane].done) { state[lane].done = true; state[lane].outcome = 'fail'; state[lane].reason = 'stopped by user'; }
+  document.getElementById('setup').classList.remove('locked');
+  document.getElementById('stopBtn').disabled = true;
+  render(); show('results'); setTimeout(() => scrollTo('results'), 600);
+}
+
+// ---------- static results for the whole Run (simulated) ----------
+const RESULTS = {
+  summary: {
+    baseline: { pass: 1, fail: 1, durationMs: 21400, steps: 17, tokens: 148200, costUsd: 0.0157, toolCalls: 21, screenshots: 9 },
+    webmcp: { pass: 2, fail: 0, durationMs: 5300, steps: 5, tokens: 21800, costUsd: 0.0023, toolCalls: 3, screenshots: 0 },
+  },
+  scenarios: [
+    { id: 'cheapest-red-shirt-price',
+      baseline: { outcome: 'fail', reason: 'check failed: answerContains "19.99"', durationMs: 11000, steps: 8, tokens: 59000, costUsd: 0.0062, toolCalls: 9, screenshots: 5, tools: { screenshot: 5, read_page: 2, type: 1, click: 1 } },
+      webmcp: { outcome: 'pass', durationMs: 2400, steps: 2, tokens: 8600, costUsd: 0.0009, toolCalls: 1, screenshots: 0, tools: { search_products: 1 } } },
+    { id: 'add-red-shirt-to-cart',
+      baseline: { outcome: 'pass', durationMs: 10400, steps: 9, tokens: 89200, costUsd: 0.0095, toolCalls: 12, screenshots: 4, tools: { screenshot: 4, read_page: 1, type: 1, select: 2, click: 3 } },
+      webmcp: { outcome: 'pass', durationMs: 2900, steps: 3, tokens: 13200, costUsd: 0.0014, toolCalls: 2, screenshots: 0, tools: { search_products: 1, add_to_cart: 1 } } },
+  ],
+};
+
+// ---------- helpers ----------
+const $ = (id) => document.getElementById(id);
+const show = (id) => $(id).classList.remove('hidden');
+const hide = (id) => $(id).classList.add('hidden');
+const scrollTo = (id) => $(id).scrollIntoView({ behavior: 'smooth', block: 'start' });
+const sec = (s) => s.toFixed(1) + ' s';
+const ms = (m) => (m / 1000).toFixed(1) + ' s';
+const usd = (c) => '$' + c.toFixed(4);
+const num = (n) => n.toLocaleString('en-US');
+const total = (o) => Object.values(o).reduce((a, b) => a + b, 0);
+const LANES = [['baseline', 'Baseline', 'bl'], ['webmcp', 'WebMCP', 'wm']];
+const status = (L) => L.done ? `<span class="tag ${L.outcome}">${L.outcome === 'pass' ? 'Pass' : 'Fail'}</span>` : '<span class="tag run">running</span>';
+const frameStyle = (L) => `background-image:url(frames/${L.frame}.jpg)`;
+const isWm = (tool) => WEBMCP_TOOLS.includes(tool);
+const better = (mine, other) => (mine < other ? 'lower' : mine > other ? 'higher' : '');
+const fmtInput = (i) => Object.entries(i).map(([k, v]) => `${k}: ${JSON.stringify(v)}`).join(', ');
+const METRICS = [['durationMs', 'Time', ms], ['steps', 'Steps', num], ['tokens', 'Tokens', num], ['costUsd', 'Cost', usd], ['toolCalls', 'Tool calls', num], ['screenshots', 'Screenshots', num]];
+const liveMetric = (L) => ({ durationMs: L.t * 1000, steps: L.steps, tokens: L.tokens, costUsd: L.cost, toolCalls: total(L.tools), screenshots: L.shots });
+
+// ---------- Variant A: twin columns ----------
+const A = {
+  name: 'Twin columns',
+  live() {
+    return `<div class="a-cols">${LANES.map(([k, label, cls]) => {
+      const L = state[k], m = liveMetric(L);
+      return `<div>
+        <div class="a-head"><span class="tag ${cls}">${label}</span>${status(L)}</div>
+        <div class="frame" style="${frameStyle(L)}"></div>
+        <div class="a-tiles">${METRICS.map(([key, lbl, f]) => `<div class="a-tile"><span>${lbl}</span><b>${f(m[key])}</b></div>`).join('')}</div>
+        <div class="feed">${L.feed.slice().reverse().map((e) => `<div><span class="muted">${sec(e.at)}</span> <span class="${isWm(e.tool) ? 'wmtool' : ''}">${e.tool}</span>(${fmtInput(e.input)})</div>`).join('') || '<span class="muted">waiting for first tool call…</span>'}</div>
+      </div>`;
+    }).join('')}</div>`;
+  },
+  results() {
+    const s = RESULTS.summary;
+    const table = (b, w, extra = '') => `<table><tr><th></th><th><span class="tag bl">Baseline</span></th><th><span class="tag wm">WebMCP</span></th></tr>${extra}
+      ${METRICS.map(([k, l, f]) => `<tr><td>${l}</td><td>${f(b[k])}</td><td>${f(w[k])}</td></tr>`).join('')}</table>`;
+    return `<h3>Run summary</h3>${table(s.baseline, s.webmcp, `<tr><td>Passed</td><td>${s.baseline.pass}/2</td><td>${s.webmcp.pass}/2</td></tr>`)}
+      ${RESULTS.scenarios.map((sc) => `<h3 style="margin-top:22px">${sc.id}</h3>${table(sc.baseline, sc.webmcp,
+        `<tr><td>Outcome</td><td>${sc.baseline.outcome === 'pass' ? '<span class="tag pass">Pass</span>' : `<span class="tag fail">Fail</span> <span class="muted">${sc.baseline.reason}</span>`}</td><td><span class="tag pass">Pass</span></td></tr>`)}
+        <details style="margin-top:6px"><summary class="muted">Attempt 1 · tool calls by name</summary>
+        <p>Baseline: ${Object.entries(sc.baseline.tools).map(([t, n]) => `${t} ×${n}`).join(', ')}<br>WebMCP: ${Object.entries(sc.webmcp.tools).map(([t, n]) => `${t} ×${n}`).join(', ')}</p></details>`).join('')}`;
+  },
+};
+
+// ---------- Variant B: scoreboard ----------
+const B = {
+  name: 'Scoreboard',
+  live() {
+    const b = liveMetric(state.baseline), w = liveMetric(state.webmcp);
+    const lane = (k, label, cls) => {
+      const L = state[k];
+      return `<div><div class="a-head"><span class="tag ${cls}">${label}</span>${status(L)}</div>
+        <div class="frame" style="${frameStyle(L)}"></div>
+        <div class="b-chips">${Object.entries(L.tools).map(([t, n]) => `<span class="chip ${isWm(t) ? 'wmtool' : ''}">${t} ×${n}</span>`).join('') || '<span class="muted">no tool calls yet</span>'}</div>
+        <details style="margin-top:6px"><summary class="muted">Tool-call log</summary><div class="feed">${L.feed.map((e) => `<div>${sec(e.at)} ${e.tool}(${fmtInput(e.input)})</div>`).join('')}</div></details></div>`;
+    };
+    return `<div class="b-grid">${lane('baseline', 'Baseline', 'bl')}
+      <div class="b-board"><div class="r hd"><b>Baseline</b><span style="color:#9ca3af">live</span><b>WebMCP</b></div>
+        ${METRICS.map(([k, l, f]) => `<div class="r"><b class="${b[k] < w[k] ? 'lower' : ''}">${f(b[k])}</b><span>${l}</span><b class="${w[k] < b[k] ? 'lower' : ''}">${f(w[k])}</b></div>`).join('')}</div>
+      ${lane('webmcp', 'WebMCP', 'wm')}</div>`;
+  },
+  results() {
+    const bars = (b, w) => METRICS.map(([k, l, f]) => {
+      const max = Math.max(b[k], w[k]) || 1;
+      return `<div class="metric"><b>${l}</b>
+        <div class="bar" style="width:${Math.max(4, b[k] / max * 100)}%;background:var(--bl)">Baseline ${f(b[k])}</div>
+        <div class="bar" style="width:${Math.max(4, w[k] / max * 100)}%;background:var(--wm)">WebMCP ${f(w[k])}</div></div>`;
+    }).join('');
+    const s = RESULTS.summary;
+    return `<h3>Run summary <span class="muted" style="font-weight:400">· Passed: Baseline ${s.baseline.pass}/2, WebMCP ${s.webmcp.pass}/2</span></h3>
+      <div style="max-width:720px" class="bars">${bars(s.baseline, s.webmcp)}</div>
+      ${RESULTS.scenarios.map((sc) => `<details style="margin-top:12px"><summary><b>${sc.id}</b> · Baseline ${sc.baseline.outcome} · WebMCP ${sc.webmcp.outcome}</summary>
+        <div style="max-width:720px" class="bars">${bars(sc.baseline, sc.webmcp)}</div></details>`).join('')}`;
+  },
+};
+
+// ---------- Variant C: timeline ----------
+const C = {
+  name: 'Timeline',
+  live() {
+    const span = 12, now = Math.min(span, Math.max(state.baseline.t, state.webmcp.t));
+    const track = (k, label) => `<div class="c-track"><span class="lbl">${label}</span><div class="area">
+      ${state[k].feed.map((e) => `<span class="c-dot ${e.tool === 'finish' ? 'fin' : isWm(e.tool) ? 'wmtool' : ''}" style="left:${e.at / span * 100}%" title="${e.tool}(${fmtInput(e.input)})">${e.tool === 'finish' ? '✔' : e.tool.replace(/_.*/, '')}</span>`).join('')}
+      <span class="c-now" style="left:${now / span * 100}%"></span></div></div>`;
+    const stats = (k) => { const m = liveMetric(state[k]); return `<div class="c-stats">${METRICS.map(([key, l, f]) => `<span><span class="muted">${l}</span> <b>${f(m[key])}</b></span>`).join('')}</div>`; };
+    return `<div class="c-frames">${LANES.map(([k, label, cls]) => `<div><div class="a-head"><span class="tag ${cls}">${label}</span>${status(state[k])}</div>
+        <div class="frame" style="${frameStyle(state[k])}"></div><div style="margin-top:8px">${stats(k)}</div></div>`).join('')}</div>
+      <div class="c-line">${track('baseline', 'Baseline')}${track('webmcp', 'WebMCP')}
+        <div class="c-axis">${[0, 2, 4, 6, 8, 10, 12].map((s) => `<span style="left:${s / span * 100}%">${s}s</span>`).join('')}</div></div>`;
+  },
+  results() {
+    const s = RESULTS.summary;
+    const pair = (b, w) => `<table><tr><th></th><th>Baseline</th><th>WebMCP</th></tr>${METRICS.map(([k, l, f]) => `<tr><td class="muted">${l}</td><td>${f(b[k])}</td><td>${f(w[k])}</td></tr>`).join('')}</table>`;
+    return `<div class="c-cards">
+      <div class="c-card" style="grid-column:1/-1;background:var(--soft)"><h4><span>Whole Run</span><span>Passed: Baseline ${s.baseline.pass}/2 · WebMCP ${s.webmcp.pass}/2</span></h4>${pair(s.baseline, s.webmcp)}</div>
+      ${RESULTS.scenarios.map((sc) => `<div class="c-card"><h4><span>${sc.id}</span><span><span class="tag ${sc.baseline.outcome}">B ${sc.baseline.outcome}</span> <span class="tag ${sc.webmcp.outcome}">W ${sc.webmcp.outcome}</span></span></h4>
+        ${sc.baseline.reason ? `<p class="muted" style="margin:0 0 6px">Baseline: ${sc.baseline.reason}</p>` : ''}${pair(sc.baseline, sc.webmcp)}</div>`).join('')}</div>`;
+  },
+};
+
+// ---------- Variant D: owner's mix (twin columns + divider, scoreboard below screens, bar results) ----------
+const D = {
+  name: 'Chosen mix',
+  live() {
+    const b = liveMetric(state.baseline), w = liveMetric(state.webmcp);
+    const col = (inner) => `<div class="d-cols">${LANES.map(([k, label, cls]) => `<div>${inner(k, label, cls)}</div>`).join('')}</div>`;
+    return `${col((k, label, cls) => `<div class="a-head"><span class="tag ${cls}">${label}</span>${status(state[k])}</div>
+        <div class="frame" style="${frameStyle(state[k])}"></div>`)}
+      <div class="b-board d-board"><div class="r hd"><b>Baseline</b><span style="color:#9ca3af">live</span><b>WebMCP</b></div>
+        ${METRICS.map(([k, l, f]) => `<div class="r"><b class="${better(b[k], w[k])}">${f(b[k])}</b><span>${l}</span><b class="${better(w[k], b[k])}">${f(w[k])}</b></div>`).join('')}</div>
+      ${col((k) => `<div class="feed">${state[k].feed.slice().reverse().map((e) => `<div><span class="muted">${sec(e.at)}</span> <span class="${isWm(e.tool) ? 'wmtool' : ''}">${e.tool}</span>(${fmtInput(e.input)})</div>`).join('') || '<span class="muted">waiting for first tool call…</span>'}</div>`)}`;
+  },
+  results() {
+    const bars = (b, w) => METRICS.map(([k, l, f]) => {
+      const max = Math.max(b[k], w[k]) || 1;
+      return `<div class="metric"><b>${l}</b>
+        <div class="brow"><div class="bar" style="width:${Math.max(1, b[k] / max * 75)}%;background:var(--bl)"></div><span class="${better(b[k], w[k])}">${f(b[k])}</span></div>
+        <div class="brow"><div class="bar" style="width:${Math.max(1, w[k] / max * 75)}%;background:var(--wm)"></div><span class="${better(w[k], b[k])}">${f(w[k])}</span></div></div>`;
+    }).join('');
+    const legend = `<div class="legend"><span><i style="background:var(--bl)"></i>Baseline</span><span><i style="background:var(--wm)"></i>WebMCP</span>
+      <span class="muted">Values: <b class="lower">green</b> = lower (better), <b class="higher">red</b> = higher</span></div>`;
+    const outcome = (label, cls, r) => `<span class="tag ${cls}">${label}</span> <span class="tag ${r.outcome}">${r.outcome === 'pass' ? 'Pass' : 'Fail'}</span>${r.reason ? ` <span class="muted">${r.reason}</span>` : ''}`;
+    const s = RESULTS.summary;
+    return `${legend}<h3>Run summary <span class="muted" style="font-weight:400">· Passed: Baseline ${s.baseline.pass}/2, WebMCP ${s.webmcp.pass}/2</span></h3>
+      <div style="max-width:720px" class="bars">${bars(s.baseline, s.webmcp)}</div>
+      ${RESULTS.scenarios.map((sc) => `<details class="d-scen"><summary><b>${sc.id}</b>
+          <div class="d-out">${outcome('Baseline', 'bl', sc.baseline)}</div><div class="d-out">${outcome('WebMCP', 'wm', sc.webmcp)}</div></summary>
+        <div style="max-width:720px" class="bars">${bars(sc.baseline, sc.webmcp)}</div>
+        <p class="muted">Attempt 1 tool calls: Baseline ${Object.entries(sc.baseline.tools).map(([t, n]) => `${t} ×${n}`).join(', ')} · WebMCP ${Object.entries(sc.webmcp.tools).map(([t, n]) => `${t} ×${n}`).join(', ')}</p></details>`).join('')}`;
+  },
+};
+
+// ---------- variant switching ----------
+const VARIANTS = { A, B, C, D };
+const keys = Object.keys(VARIANTS);
+let variant = new URLSearchParams(location.search).get('variant') || 'A';
+function render() {
+  const V = VARIANTS[variant];
+  $('vlabel').textContent = `${variant} (${V.name})`;
+  $('liveTitle').textContent = `Scenario 2 of 2 · ${state.scenario} · Attempt 1 of 1`;
+  $('liveBody').innerHTML = V.live();
+  $('resultsBody').innerHTML = V.results();
+}
+function cycle(d) {
+  variant = keys[(keys.indexOf(variant) + d + keys.length) % keys.length];
+  history.replaceState(null, '', '?variant=' + variant);
+  render();
+}
+document.addEventListener('keydown', (e) => {
+  if (e.target.closest('input,textarea,[contenteditable]')) return;
+  if (e.key === 'ArrowLeft') cycle(-1);
+  if (e.key === 'ArrowRight') cycle(1);
+});
+render();
+</script>
+</body>
+</html>

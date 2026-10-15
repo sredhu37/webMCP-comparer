@@ -2,133 +2,179 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>PROTOTYPE: webMCP-comparer UI layout</title>
+<title>PROTOTYPE: webMCP-comparer UI</title>
 <!--
-  PROTOTYPE (throwaway): three variants of the Live and Results sections on the agreed single page
-  (sidebar + Setup + Live + Results), switchable via ?variant=A|B|C and the bottom bar.
-  Run data is simulated; frames are real demo shop screenshots.
+  PROTOTYPE (throwaway): the chosen single-page layout (variant D) with colour and motion.
+  Earlier variants A to D: variants-abcd.html. Run data is simulated; live frames are real demo shop screenshots.
 -->
 <style>
-  :root { --bl: #6b7280; --wm: #2563eb; --ok: #15803d; --bad: #b91c1c; --line: #e5e7eb; --soft: #f8fafc; }
+  :root {
+    --bg: #f4f6fb; --ink: #0f172a; --muted: #64748b; --line: #e6e9f2;
+    --base-a: #0ea5e9; --base-b: #22d3ee; --wm-a: #7c3aed; --wm-b: #d946ef;
+    --good: #16a34a; --bad: #dc2626; --night: #0b1020;
+    --base-grad: linear-gradient(90deg, var(--base-a), var(--base-b));
+    --wm-grad: linear-gradient(90deg, var(--wm-a), var(--wm-b));
+    --brand-grad: linear-gradient(90deg, var(--base-a), var(--wm-a) 55%, var(--wm-b));
+  }
   * { box-sizing: border-box; }
-  body { margin: 0; font: 14px/1.45 system-ui, sans-serif; color: #111827; display: flex; min-height: 100vh; }
-  aside { width: 230px; flex: none; border-right: 1px solid var(--line); background: var(--soft); padding: 14px; position: sticky; top: 0; height: 100vh; overflow: auto; transition: width .2s; }
-  aside.closed { width: 44px; padding: 14px 8px; }
-  aside.closed .list, aside.closed h3 { display: none; }
-  aside h3 { margin: 0 0 10px; font-size: 13px; text-transform: uppercase; letter-spacing: .05em; color: #6b7280; }
-  .run-item { border: 1px solid var(--line); background: #fff; border-radius: 8px; padding: 8px; margin-bottom: 8px; font-size: 12px; }
-  .run-item b { display: block; font-size: 13px; }
-  .run-item button { font-size: 11px; padding: 2px 8px; margin: 4px 4px 0 0; }
-  main { flex: 1; min-width: 0; padding: 0 28px 120px; }
-  section { padding: 24px 0; border-bottom: 1px solid var(--line); }
-  section > h2 { margin: 0 0 14px; font-size: 18px; }
-  section > h2 small { font-weight: 400; color: #6b7280; font-size: 13px; margin-left: 8px; }
-  .muted { color: #6b7280; }
-  .setup { display: grid; grid-template-columns: 1.3fr 1fr; gap: 20px; }
-  .setup label { display: block; font-weight: 600; margin: 10px 0 4px; font-size: 13px; }
-  .setup input, .setup select { width: 100%; padding: 7px; border: 1px solid #d1d5db; border-radius: 6px; font: inherit; }
-  textarea { width: 100%; height: 230px; font: 12px/1.5 ui-monospace, monospace; padding: 10px; border: 1px solid #d1d5db; border-radius: 6px; background: #0f172a; color: #e2e8f0; }
-  .valid { color: var(--ok); font-size: 12px; margin-top: 4px; }
-  .checks label { font-weight: 400; display: flex; gap: 8px; align-items: center; margin: 4px 0; }
-  .checks input { width: auto; }
-  .row { display: flex; gap: 10px; }
-  .row > div { flex: 1; }
-  .btn { background: #111827; color: #fff; border: 0; border-radius: 8px; padding: 10px 22px; font-size: 15px; cursor: pointer; }
-  .btn.stop { background: var(--bad); }
-  .btn:disabled { opacity: .4; cursor: default; }
-  .locked { opacity: .55; pointer-events: none; }
-  .tag { display: inline-block; font-size: 11px; padding: 1px 8px; border-radius: 99px; font-weight: 600; }
-  .tag.bl { background: #e5e7eb; color: #374151; } .tag.wm { background: #dbeafe; color: #1d4ed8; }
-  .tag.pass { background: #dcfce7; color: var(--ok); } .tag.fail { background: #fee2e2; color: var(--bad); } .tag.run { background: #fef9c3; color: #854d0e; }
-  .frame { width: 100%; aspect-ratio: 16/10; background: #f3f4f6 center/cover no-repeat; border: 1px solid var(--line); border-radius: 8px; }
-  table { border-collapse: collapse; width: 100%; }
-  th, td { text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--line); font-variant-numeric: tabular-nums; }
-  th { font-size: 12px; color: #6b7280; font-weight: 600; }
-  .feed { font: 12px/1.6 ui-monospace, monospace; max-height: 180px; overflow: auto; border: 1px solid var(--line); border-radius: 8px; padding: 6px 10px; background: var(--soft); }
-  .feed div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .feed .wmtool { color: var(--wm); font-weight: 600; }
-  .scen-pick { margin-bottom: 10px; }
-  #switcher { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: #111; color: #fff; border-radius: 99px; padding: 8px 14px; display: flex; gap: 14px; align-items: center; box-shadow: 0 6px 24px #0005; z-index: 9; font-size: 13px; }
-  #switcher button { background: #333; color: #fff; border: 0; border-radius: 99px; width: 28px; height: 28px; cursor: pointer; }
+  body { margin: 0; font: 14px/1.5 Inter, system-ui, sans-serif; color: var(--ink); display: flex; min-height: 100vh;
+         background: radial-gradient(1200px 500px at 80% -10%, #ede9fe 0%, transparent 60%), radial-gradient(900px 400px at 10% 0%, #e0f2fe 0%, transparent 55%), var(--bg); }
+
+  aside { width: 250px; flex: none; background: var(--night); color: #cbd5e1; padding: 18px 14px; position: sticky; top: 0; height: 100vh; overflow: auto; transition: width .35s cubic-bezier(.2,.8,.2,1); }
+  aside.closed { width: 58px; }
+  aside.closed .list, aside.closed h3 { opacity: 0; pointer-events: none; }
+  aside h3 { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: #94a3b8; margin: 18px 0 10px; transition: opacity .2s; }
+  .toggle { background: #1e293b; color: #e2e8f0; border: 0; border-radius: 10px; width: 32px; height: 32px; cursor: pointer; transition: transform .2s, background .2s; }
+  .toggle:hover { background: #334155; transform: rotate(90deg); }
+  .list { transition: opacity .2s; }
+  .run-item { background: #111a33; border: 1px solid #1e293b; border-radius: 12px; padding: 10px 12px; margin-bottom: 10px; font-size: 12px; transition: transform .2s, border-color .2s, box-shadow .2s; cursor: pointer; }
+  .run-item:hover { transform: translateX(4px); border-color: #6d28d9; box-shadow: 0 6px 20px #6d28d955; }
+  .run-item b { color: #fff; font-size: 13px; display: block; }
+  .mini { display: flex; gap: 6px; margin-top: 8px; align-items: center; }
+  .mini .m { height: 6px; border-radius: 99px; }
+  .run-item .acts { margin-top: 8px; display: flex; gap: 6px; }
+  .run-item .acts span { background: #1e293b; border-radius: 99px; padding: 2px 10px; color: #e2e8f0; }
+
+  main { flex: 1; min-width: 0; padding: 0 32px 80px; }
+  .brand { display: flex; align-items: center; gap: 12px; padding: 22px 0 6px; }
+  .brand h1 { margin: 0; font-size: 24px; background: var(--brand-grad); -webkit-background-clip: text; background-clip: text; color: transparent; letter-spacing: -.02em; }
+  .brand .logo { width: 34px; height: 34px; border-radius: 10px; background: var(--brand-grad); box-shadow: 0 6px 18px #7c3aed55; animation: float 4s ease-in-out infinite; }
+  @keyframes float { 50% { transform: translateY(-3px) rotate(6deg); } }
+
+  .card { background: #fff; border-radius: 20px; padding: 24px 26px; margin: 18px 0; box-shadow: 0 1px 2px #0f172a0d, 0 12px 32px #0f172a0f; border: 1px solid #eef0f6; }
+  .card > h2 { margin: 0 0 18px; font-size: 18px; display: flex; align-items: center; gap: 10px; }
+  .card > h2 .num { width: 28px; height: 28px; border-radius: 9px; display: grid; place-items: center; color: #fff; font-size: 14px; background: var(--brand-grad); }
+  .card > h2 small { font-weight: 500; color: var(--muted); font-size: 13px; }
+  .reveal { animation: rise .6s cubic-bezier(.2,.8,.2,1) both; }
+  @keyframes rise { from { opacity: 0; transform: translateY(24px) scale(.99); } }
   .hidden { display: none; }
+  .muted { color: var(--muted); }
 
-  /* Variant A: twin columns */
-  .a-cols { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-  .a-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
-  .a-tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 10px 0; }
-  .a-tile { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
-  .a-tile span { display: block; font-size: 11px; color: #6b7280; }
-  .a-tile b { font-size: 18px; font-variant-numeric: tabular-nums; }
+  .setup { display: grid; grid-template-columns: 1.25fr 1fr; gap: 26px; transition: opacity .3s, filter .3s; }
+  .setup.locked { opacity: .55; filter: grayscale(.4); pointer-events: none; }
+  label.f { display: block; font-weight: 600; margin: 12px 0 6px; font-size: 13px; }
+  input.t, select.t { width: 100%; padding: 9px 11px; border: 1px solid #dbe1ee; border-radius: 10px; font: inherit; background: #fbfcff; transition: border-color .2s, box-shadow .2s; }
+  input.t:focus, select.t:focus { outline: 0; border-color: var(--wm-a); box-shadow: 0 0 0 4px #7c3aed22; }
+  textarea { width: 100%; height: 236px; font: 12px/1.6 ui-monospace, monospace; padding: 12px 14px; border: 0; border-radius: 12px; background: #0b1020; color: #e2e8f0; box-shadow: inset 0 0 0 1px #1e293b; }
+  .valid { color: var(--good); font-size: 12px; margin-top: 6px; display: flex; gap: 6px; align-items: center; }
+  .valid::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--good); box-shadow: 0 0 0 4px #16a34a22; }
+  .checks label { display: flex; gap: 10px; align-items: center; padding: 7px 10px; border-radius: 10px; cursor: pointer; transition: background .15s; }
+  .checks label:hover { background: #f5f3ff; }
+  .checks input { accent-color: var(--wm-a); width: 16px; height: 16px; }
+  .links a { color: var(--wm-a); text-decoration: none; font-weight: 500; }
+  .row { display: flex; gap: 10px; } .row > div { flex: 1; }
+  .run { margin-top: 18px; position: relative; overflow: hidden; border: 0; border-radius: 12px; padding: 12px 28px; font: 600 15px Inter, system-ui; color: #fff; cursor: pointer;
+         background: var(--brand-grad); background-size: 200% 100%; box-shadow: 0 10px 24px #7c3aed44; transition: transform .2s, box-shadow .2s, background-position .6s; }
+  .run:hover { transform: translateY(-2px); box-shadow: 0 14px 30px #7c3aed66; background-position: 100% 0; }
+  .run:active { transform: translateY(0) scale(.98); }
+  .run.busy { pointer-events: none; }
+  .run.busy::after { content: ''; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 30%, #ffffff55 50%, transparent 70%); animation: shimmer 1.2s infinite; }
+  @keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+  .stop { border: 0; border-radius: 12px; padding: 10px 22px; font: 600 14px Inter, system-ui; color: #fff; background: linear-gradient(90deg, #ef4444, #f97316); cursor: pointer; box-shadow: 0 8px 20px #ef444444; transition: transform .2s; }
+  .stop:hover { transform: translateY(-2px); }
+  .stop:disabled { opacity: .35; box-shadow: none; transform: none; cursor: default; }
 
-  /* Variant B: scoreboard */
-  .b-grid { display: grid; grid-template-columns: 1fr 260px 1fr; gap: 16px; align-items: start; }
-  .b-board { border: 2px solid #111827; border-radius: 12px; overflow: hidden; }
-  .b-board .r { display: grid; grid-template-columns: 1fr 90px 1fr; text-align: center; border-bottom: 1px solid var(--line); padding: 8px 4px; font-variant-numeric: tabular-nums; }
-  .b-board .r:last-child { border: 0; }
-  .b-board .r span { font-size: 11px; color: #6b7280; align-self: center; }
-  .b-board .r b { font-size: 17px; }
-  .b-board .hd { background: #111827; color: #fff; font-weight: 700; }
-  .b-board .hd b { font-size: 13px; }
-  .lower { color: var(--ok); }
-  .b-chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 8px; }
-  .chip { font: 12px ui-monospace, monospace; border: 1px solid var(--line); border-radius: 99px; padding: 2px 9px; background: #fff; }
-  .chip.wmtool { border-color: #93c5fd; color: var(--wm); }
-  .bars .metric { margin: 14px 0; }
-  .bars .bar { height: 18px; border-radius: 4px; margin: 3px 0; display: flex; align-items: center; padding-left: 8px; font-size: 12px; color: #fff; white-space: nowrap; }
+  .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; padding: 3px 12px; border-radius: 99px; color: #fff; }
+  .pill.base { background: var(--base-grad); } .pill.wm { background: var(--wm-grad); }
+  .cols { display: grid; grid-template-columns: 1fr 2px 1fr; gap: 0 24px; }
+  .divider { background: linear-gradient(180deg, transparent, var(--base-b), var(--wm-a), transparent); border-radius: 2px; }
+  .lane-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .status { font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 99px; transition: all .3s; }
+  .status.running { background: #fef3c7; color: #92400e; }
+  .status.running::before { content: ''; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #f59e0b; margin-right: 6px; animation: pulse 1s infinite; }
+  .status.pass { background: #dcfce7; color: var(--good); animation: pop .5s cubic-bezier(.2,1.6,.4,1); }
+  .status.fail { background: #fee2e2; color: var(--bad); animation: pop .5s cubic-bezier(.2,1.6,.4,1); }
+  @keyframes pulse { 50% { opacity: .3; transform: scale(.7); } }
+  @keyframes pop { from { transform: scale(.4); opacity: 0; } }
+  .screen { position: relative; aspect-ratio: 16/10; border-radius: 14px; overflow: hidden; background: #e2e8f0; box-shadow: 0 10px 30px #0f172a1f; transition: box-shadow .4s; }
+  .screen.base.on { box-shadow: 0 0 0 2px var(--base-a), 0 12px 34px #0ea5e944; }
+  .screen.wm.on { box-shadow: 0 0 0 2px var(--wm-a), 0 12px 34px #7c3aed44; }
+  .screen img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity .45s; }
+  .live-dot { position: absolute; bottom: 10px; left: 10px; background: #0b1020cc; color: #fff; font-size: 11px; font-weight: 700; letter-spacing: .08em; padding: 3px 9px; border-radius: 99px; display: flex; align-items: center; gap: 6px; }
+  .live-dot::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: #ef4444; animation: pulse 1s infinite; }
+  .done-badge { position: absolute; inset: 0; display: grid; place-items: center; background: #0b102055; animation: fade .4s both; }
+  .done-badge span { background: #fff; border-radius: 16px; padding: 10px 18px; font-weight: 800; font-size: 18px; animation: pop .5s cubic-bezier(.2,1.6,.4,1) both; }
+  @keyframes fade { from { opacity: 0; } }
+  .progress { height: 6px; background: #eef1f7; border-radius: 99px; margin-top: 12px; overflow: hidden; }
+  .progress i { display: block; height: 100%; border-radius: 99px; transition: width .5s cubic-bezier(.2,.8,.2,1); }
+  .progress-label { font-size: 11px; color: var(--muted); margin-top: 4px; }
 
-  /* Variant C: timeline */
-  .c-frames { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-  .c-frames .frame { aspect-ratio: 16/9; }
-  .c-line { margin-top: 18px; border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
-  .c-track { position: relative; height: 34px; border-bottom: 1px dashed var(--line); }
-  .c-track .lbl { position: absolute; left: 0; top: 7px; width: 90px; font-weight: 600; font-size: 12px; }
-  .c-track .area { position: absolute; left: 100px; right: 0; top: 0; bottom: 0; }
-  .c-dot { position: absolute; top: 6px; transform: translateX(-50%); font: 11px ui-monospace, monospace; padding: 2px 6px; border-radius: 6px; background: #e5e7eb; white-space: nowrap; }
-  .c-dot.wmtool { background: #dbeafe; color: #1d4ed8; }
-  .c-dot.fin { background: #111827; color: #fff; }
-  .c-axis { position: relative; margin-left: 100px; height: 18px; font-size: 11px; color: #6b7280; }
-  .c-axis span { position: absolute; transform: translateX(-50%); }
-  .c-now { position: absolute; top: 0; bottom: 0; width: 2px; background: #f59e0b; }
-  .c-stats { display: flex; gap: 18px; font-variant-numeric: tabular-nums; flex-wrap: wrap; }
-  .c-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
-  .c-card { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
-  .c-card h4 { margin: 0 0 8px; display: flex; justify-content: space-between; }
+  .board { max-width: 600px; margin: 24px auto; border-radius: 18px; padding: 2px; background: var(--brand-grad); box-shadow: 0 16px 40px #7c3aed33; }
+  .board-in { background: var(--night); border-radius: 16px; overflow: hidden; }
+  .board .r { display: grid; grid-template-columns: 1fr 110px 1fr; text-align: center; padding: 9px 6px; border-top: 1px solid #1e293b; font-variant-numeric: tabular-nums; }
+  .board .hd { border: 0; padding: 12px 6px; }
+  .board .hd b { font-size: 13px; }
+  .board .r span { font-size: 11px; color: #94a3b8; align-self: center; letter-spacing: .04em; text-transform: uppercase; }
+  .board .r b { font-size: 19px; color: #e2e8f0; transition: color .4s; display: inline-block; }
+  .board .r b.bump { animation: bump .35s; }
+  @keyframes bump { 40% { transform: scale(1.18); } }
+  .board .r b.lower { color: #4ade80; }
+  .board .r b.higher { color: #f87171; }
 
-  /* Variant D: chosen mix */
-  .d-cols { display: grid; grid-template-columns: 1fr 1fr; }
-  .d-cols > div { padding: 0 20px; }
-  .d-cols > div:first-child { padding-left: 0; border-right: 2px solid #d1d5db; }
-  .d-cols > div:last-child { padding-right: 0; }
-  .d-board { max-width: 560px; margin: 18px auto; }
-  .d-scen { margin-top: 12px; border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; }
-  .d-scen summary { cursor: pointer; }
-  .d-out { margin: 4px 0 0 18px; font-size: 13px; }
-  .brow { display: flex; align-items: center; gap: 8px; margin: 3px 0; font-size: 12px; font-variant-numeric: tabular-nums; }
-  .brow .bar { margin: 0; padding: 0; min-width: 3px; }
-  .brow span { font-weight: 600; }
-  .higher { color: var(--bad); }
-  .legend { display: flex; gap: 18px; align-items: center; font-size: 13px; margin-bottom: 6px; }
-  .legend i { display: inline-block; width: 14px; height: 14px; border-radius: 3px; vertical-align: -2px; margin-right: 6px; }
+  .feed { font: 12px/1.7 ui-monospace, monospace; height: 190px; overflow: auto; border-radius: 12px; padding: 8px 12px; background: #f8fafc; border: 1px solid var(--line); }
+  .feed div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; animation: slidein .35s cubic-bezier(.2,.8,.2,1) both; }
+  @keyframes slidein { from { opacity: 0; transform: translateX(-14px); background: #ede9fe; } }
+  .feed .t { color: var(--muted); }
+  .feed .wmtool { color: var(--wm-a); font-weight: 700; }
+  .feed .fin { color: var(--good); font-weight: 700; }
+
+  .legend { display: flex; gap: 18px; font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+  .legend i { display: inline-block; width: 26px; height: 10px; border-radius: 99px; margin-right: 8px; }
+  .summary-head { display: flex; align-items: baseline; gap: 14px; margin: 14px 0 4px; }
+  .summary-head h3 { margin: 0; }
+  .passes { display: flex; gap: 8px; }
+  .chip { font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 99px; }
+  .chip.pass { background: #dcfce7; color: var(--good); } .chip.fail { background: #fee2e2; color: var(--bad); }
+  .metric { margin: 12px 0; max-width: 760px; }
+  .metric b.l { font-size: 13px; }
+  .brow { display: flex; align-items: center; gap: 10px; margin: 4px 0; font-variant-numeric: tabular-nums; }
+  .bar { height: 14px; border-radius: 99px; width: 0; min-width: 4px; transition: width 1s cubic-bezier(.2,.8,.2,1); }
+  .val { font-weight: 700; font-size: 13px; opacity: 0; transition: opacity .4s .5s; }
+  .val.lower { color: var(--good); } .val.higher { color: var(--bad); }
+  .shown .val { opacity: 1; }
+  .scen { border: 1px solid var(--line); border-radius: 14px; margin-top: 12px; overflow: hidden; transition: box-shadow .25s, border-color .25s; }
+  .scen:hover { border-color: #c4b5fd; box-shadow: 0 8px 22px #7c3aed1a; }
+  .scen-head { display: flex; align-items: center; gap: 14px; padding: 12px 16px; cursor: pointer; flex-wrap: wrap; }
+  .scen-head .chev { transition: transform .3s; color: var(--wm-a); font-weight: 900; font-size: 18px; }
+  .scen.open .chev { transform: rotate(90deg); }
+  .scen-head .id { font-weight: 700; min-width: 210px; }
+  .outc { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+  .outc .reason { color: var(--muted); }
+  .scen-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .45s cubic-bezier(.2,.8,.2,1); }
+  .scen.open .scen-body { grid-template-rows: 1fr; }
+  .scen-body > div { overflow: hidden; padding: 0 16px; }
+  .scen.open .scen-body > div { padding-bottom: 14px; }
+  .tools { font-size: 12px; color: var(--muted); }
+
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 </style>
 </head>
 <body>
 <aside id="side">
-  <button onclick="side.classList.toggle('closed')" title="Collapse">☰</button>
-  <h3 style="margin-top:12px">Past Runs</h3>
+  <button class="toggle" onclick="side.classList.toggle('closed')" title="Collapse">☰</button>
+  <h3>Past Runs</h3>
   <div class="list">
-    <div class="run-item"><b>Today 14:30</b>localhost:4000 · Haiku 5.5<br>Baseline 3/4 · WebMCP 4/4<br><button>Open</button><button>Zip ⬇</button></div>
-    <div class="run-item"><b>Today 11:02</b>shop.example.com · gpt-6-luna<br>Baseline 2/4 · WebMCP 4/4<br><button>Open</button><button>Zip ⬇</button></div>
-    <div class="run-item"><b>Yesterday 17:45</b>localhost:4000 · Sonnet 5.5<br>Baseline 4/4 · WebMCP 4/4<br><button>Open</button><button>Zip ⬇</button></div>
+    <div class="run-item"><b>Today 14:30</b>localhost:4000 · Haiku 5.5
+      <div class="mini"><span class="m" style="width:45px;background:var(--base-grad)"></span>3/4 <span class="m" style="width:60px;background:var(--wm-grad)"></span>4/4</div>
+      <div class="acts"><span>Open</span><span>Zip ⬇</span></div></div>
+    <div class="run-item"><b>Today 11:02</b>shop.example.com · gpt-6-luna
+      <div class="mini"><span class="m" style="width:30px;background:var(--base-grad)"></span>2/4 <span class="m" style="width:60px;background:var(--wm-grad)"></span>4/4</div>
+      <div class="acts"><span>Open</span><span>Zip ⬇</span></div></div>
+    <div class="run-item"><b>Yesterday 17:45</b>localhost:4000 · Sonnet 5.5
+      <div class="mini"><span class="m" style="width:60px;background:var(--base-grad)"></span>4/4 <span class="m" style="width:60px;background:var(--wm-grad)"></span>4/4</div>
+      <div class="acts"><span>Open</span><span>Zip ⬇</span></div></div>
   </div>
 </aside>
 
 <main>
-  <section id="setup">
-    <h2>① Setup</h2>
-    <div class="setup">
+  <div class="brand"><div class="logo"></div><h1>webMCP-comparer</h1></div>
+
+  <section class="card" id="setup">
+    <h2><span class="num">1</span>Setup</h2>
+    <div class="setup" id="setupBody">
       <div>
-        <label>Site URL</label><input value="http://localhost:4000">
-        <label>Suite <span class="muted" style="font-weight:400">· <a href="#">Upload .yaml</a> or edit below</span></label>
+        <label class="f">Site URL</label><input class="t" value="http://localhost:4000">
+        <label class="f">Suite <span class="muted links" style="font-weight:400">· <a href="#">Upload .yaml</a> or edit below</span></label>
         <textarea spellcheck="false">scenarios:
   - id: cheapest-red-shirt-price
     prompt: What does the cheapest red shirt cost?
@@ -143,10 +189,10 @@
     prompt: Add these sneakers in size 42 to the cart.
   - id: full-checkout
     prompt: Buy one black hat and check out as Jane Doe ...</textarea>
-        <div class="valid">✔ Valid Suite, 4 Scenarios</div>
+        <div class="valid">Valid Suite · 4 Scenarios</div>
       </div>
       <div>
-        <label>Scenarios <span class="muted" style="font-weight:400">· <a href="#">Select all</a> · <a href="#">Select none</a></span></label>
+        <label class="f">Scenarios <span class="links" style="font-weight:400">· <a href="#">Select all</a> · <a href="#">Select none</a></span></label>
         <div class="checks">
           <label><input type="checkbox" checked> cheapest-red-shirt-price</label>
           <label><input type="checkbox" checked> add-red-shirt-to-cart</label>
@@ -154,40 +200,36 @@
           <label><input type="checkbox"> full-checkout</label>
         </div>
         <div class="row">
-          <div><label>Provider</label><select><option>Anthropic</option><option>OpenAI</option></select></div>
-          <div><label>Model</label><select><option>Haiku 5.5 (recommended)</option><option>Sonnet 5.5 (ok)</option><option>Opus 5.5 (not recommended)</option></select></div>
+          <div><label class="f">Provider</label><select class="t"><option>Anthropic</option><option>OpenAI</option></select></div>
+          <div><label class="f">Model</label><select class="t"><option>Haiku 5.5 (recommended)</option><option>Sonnet 5.5 (ok)</option><option>Opus 5.5 (not recommended)</option></select></div>
         </div>
-        <label>API key</label><input value="Key loaded from .env ✔" disabled>
+        <label class="f">API key</label><input class="t" value="Key loaded from .env ✔" disabled>
         <div class="row">
-          <div><label>Repeat</label><input value="1"></div>
-          <div><label>Max steps</label><input value="50"></div>
-          <div><label>Max minutes</label><input value="5"></div>
-          <div><label>Max $</label><input value="2.00"></div>
+          <div><label class="f">Repeat</label><input class="t" value="1"></div>
+          <div><label class="f">Max steps</label><input class="t" value="50"></div>
+          <div><label class="f">Max min</label><input class="t" value="5"></div>
+          <div><label class="f">Max $</label><input class="t" value="2.00"></div>
         </div>
-        <p><button class="btn" id="runBtn" onclick="startRun()">Run ▶</button></p>
+        <button class="run" id="runBtn" onclick="startRun()">Run ▶</button>
       </div>
     </div>
   </section>
 
-  <section id="live" class="hidden">
-    <h2>② Live <small id="liveTitle"></small></h2>
-    <div id="liveBody"></div>
-    <p><button class="btn stop" id="stopBtn" onclick="finish(true)">Stop</button></p>
+  <section class="card hidden" id="live">
+    <h2><span class="num">2</span>Live <small id="liveTitle"></small></h2>
+    <div class="cols"><div id="lane-baseline"></div><div class="divider"></div><div id="lane-webmcp"></div></div>
+    <div class="board"><div class="board-in" id="board"></div></div>
+    <div class="cols"><div class="feed" id="feed-baseline"></div><div class="divider"></div><div class="feed" id="feed-webmcp"></div></div>
+    <p style="margin:18px 0 0"><button class="stop" id="stopBtn" onclick="finish(true)">Stop</button></p>
   </section>
 
-  <section id="results" class="hidden">
-    <h2>③ Results</h2>
+  <section class="card hidden" id="results">
+    <h2><span class="num">3</span>Results</h2>
     <div id="resultsBody"></div>
   </section>
 </main>
 
-<div id="switcher">
-  <button onclick="cycle(-1)">←</button><span id="vlabel"></span><button onclick="cycle(1)">→</button>
-</div>
-
 <script>
-// ---------- simulated Run ----------
-const SCEN = ['cheapest-red-shirt-price', 'add-red-shirt-to-cart'];
 const SCRIPTS = {
   baseline: [
     [0.6, 'model', 3100], [0.7, 'screenshot', {}, 'home'], [1.6, 'model', 4600], [1.7, 'read_page', {}],
@@ -204,56 +246,16 @@ const SCRIPTS = {
   ],
 };
 const WEBMCP_TOOLS = ['search_products', 'add_to_cart', 'get_product', 'view_cart', 'checkout'];
-const PRICE_IN = 0.10 / 1e6, PRICE_OUT = 0.50 / 1e6;
-let state, timer, t0;
+const PRICE_IN = 0.10 / 1e6, PRICE_OUT = 0.50 / 1e6, MAX_STEPS = 50;
+const LANES = [['baseline', 'Baseline', 'base'], ['webmcp', 'WebMCP', 'wm']];
+const int = (n) => Math.round(n).toLocaleString('en-US');
+const METRICS = [['durationMs', 'Time', (m) => (m / 1000).toFixed(1) + ' s'], ['steps', 'Steps', int], ['tokens', 'Tokens', int],
+  ['costUsd', 'Cost', (c) => '$' + c.toFixed(4)], ['toolCalls', 'Tool calls', int], ['screenshots', 'Screenshots', int]];
 
-function fresh() {
-  const lane = () => ({ t: 0, steps: 0, tokens: 0, cost: 0, tools: {}, shots: 0, frame: 'home', feed: [], done: false });
-  return { baseline: lane(), webmcp: lane(), scenario: SCEN[1], running: false };
-}
-state = fresh();
-
-function startRun() {
-  state = fresh(); state.running = true; t0 = performance.now();
-  document.getElementById('setup').classList.add('locked');
-  show('live'); hide('results'); scrollTo('live');
-  document.getElementById('stopBtn').disabled = false;
-  const idx = { baseline: 0, webmcp: 0 };
-  clearInterval(timer);
-  timer = setInterval(() => {
-    const now = (performance.now() - t0) / 1000;
-    for (const lane of ['baseline', 'webmcp']) {
-      const L = state[lane], ev = SCRIPTS[lane];
-      if (!L.done) L.t = now;
-      while (idx[lane] < ev.length && ev[idx[lane]][0] <= now) {
-        const [at, kind, arg, frame] = ev[idx[lane]++];
-        if (kind === 'model') { L.steps++; L.tokens += arg + 140; L.cost += arg * PRICE_IN + 140 * PRICE_OUT; }
-        else if (kind === 'finish') { L.done = true; L.t = at; L.outcome = 'pass'; L.feed.push({ at, tool: 'finish', input: arg }); }
-        else {
-          L.tools[kind] = (L.tools[kind] || 0) + 1; L.feed.push({ at, tool: kind, input: arg });
-          if (kind === 'screenshot') L.shots++;
-          if (frame) L.frame = frame;
-        }
-      }
-    }
-    render();
-    if (state.baseline.done && state.webmcp.done) finish(false);
-  }, 100);
-}
-
-function finish(stopped) {
-  clearInterval(timer); state.running = false; state.stopped = stopped;
-  for (const lane of ['baseline', 'webmcp']) if (!state[lane].done) { state[lane].done = true; state[lane].outcome = 'fail'; state[lane].reason = 'stopped by user'; }
-  document.getElementById('setup').classList.remove('locked');
-  document.getElementById('stopBtn').disabled = true;
-  render(); show('results'); setTimeout(() => scrollTo('results'), 600);
-}
-
-// ---------- static results for the whole Run (simulated) ----------
 const RESULTS = {
   summary: {
-    baseline: { pass: 1, fail: 1, durationMs: 21400, steps: 17, tokens: 148200, costUsd: 0.0157, toolCalls: 21, screenshots: 9 },
-    webmcp: { pass: 2, fail: 0, durationMs: 5300, steps: 5, tokens: 21800, costUsd: 0.0023, toolCalls: 3, screenshots: 0 },
+    baseline: { pass: 1, of: 2, durationMs: 21400, steps: 17, tokens: 148200, costUsd: 0.0157, toolCalls: 21, screenshots: 9 },
+    webmcp: { pass: 2, of: 2, durationMs: 5300, steps: 5, tokens: 21800, costUsd: 0.0023, toolCalls: 3, screenshots: 0 },
   },
   scenarios: [
     { id: 'cheapest-red-shirt-price',
@@ -265,161 +267,152 @@ const RESULTS = {
   ],
 };
 
-// ---------- helpers ----------
 const $ = (id) => document.getElementById(id);
-const show = (id) => $(id).classList.remove('hidden');
-const hide = (id) => $(id).classList.add('hidden');
-const scrollTo = (id) => $(id).scrollIntoView({ behavior: 'smooth', block: 'start' });
-const sec = (s) => s.toFixed(1) + ' s';
-const ms = (m) => (m / 1000).toFixed(1) + ' s';
-const usd = (c) => '$' + c.toFixed(4);
-const num = (n) => n.toLocaleString('en-US');
-const total = (o) => Object.values(o).reduce((a, b) => a + b, 0);
-const LANES = [['baseline', 'Baseline', 'bl'], ['webmcp', 'WebMCP', 'wm']];
-const status = (L) => L.done ? `<span class="tag ${L.outcome}">${L.outcome === 'pass' ? 'Pass' : 'Fail'}</span>` : '<span class="tag run">running</span>';
-const frameStyle = (L) => `background-image:url(frames/${L.frame}.jpg)`;
-const isWm = (tool) => WEBMCP_TOOLS.includes(tool);
 const better = (mine, other) => (mine < other ? 'lower' : mine > other ? 'higher' : '');
 const fmtInput = (i) => Object.entries(i).map(([k, v]) => `${k}: ${JSON.stringify(v)}`).join(', ');
-const METRICS = [['durationMs', 'Time', ms], ['steps', 'Steps', num], ['tokens', 'Tokens', num], ['costUsd', 'Cost', usd], ['toolCalls', 'Tool calls', num], ['screenshots', 'Screenshots', num]];
-const liveMetric = (L) => ({ durationMs: L.t * 1000, steps: L.steps, tokens: L.tokens, costUsd: L.cost, toolCalls: total(L.tools), screenshots: L.shots });
+let state, timer, t0, shown;
 
-// ---------- Variant A: twin columns ----------
-const A = {
-  name: 'Twin columns',
-  live() {
-    return `<div class="a-cols">${LANES.map(([k, label, cls]) => {
-      const L = state[k], m = liveMetric(L);
-      return `<div>
-        <div class="a-head"><span class="tag ${cls}">${label}</span>${status(L)}</div>
-        <div class="frame" style="${frameStyle(L)}"></div>
-        <div class="a-tiles">${METRICS.map(([key, lbl, f]) => `<div class="a-tile"><span>${lbl}</span><b>${f(m[key])}</b></div>`).join('')}</div>
-        <div class="feed">${L.feed.slice().reverse().map((e) => `<div><span class="muted">${sec(e.at)}</span> <span class="${isWm(e.tool) ? 'wmtool' : ''}">${e.tool}</span>(${fmtInput(e.input)})</div>`).join('') || '<span class="muted">waiting for first tool call…</span>'}</div>
-      </div>`;
-    }).join('')}</div>`;
-  },
-  results() {
-    const s = RESULTS.summary;
-    const table = (b, w, extra = '') => `<table><tr><th></th><th><span class="tag bl">Baseline</span></th><th><span class="tag wm">WebMCP</span></th></tr>${extra}
-      ${METRICS.map(([k, l, f]) => `<tr><td>${l}</td><td>${f(b[k])}</td><td>${f(w[k])}</td></tr>`).join('')}</table>`;
-    return `<h3>Run summary</h3>${table(s.baseline, s.webmcp, `<tr><td>Passed</td><td>${s.baseline.pass}/2</td><td>${s.webmcp.pass}/2</td></tr>`)}
-      ${RESULTS.scenarios.map((sc) => `<h3 style="margin-top:22px">${sc.id}</h3>${table(sc.baseline, sc.webmcp,
-        `<tr><td>Outcome</td><td>${sc.baseline.outcome === 'pass' ? '<span class="tag pass">Pass</span>' : `<span class="tag fail">Fail</span> <span class="muted">${sc.baseline.reason}</span>`}</td><td><span class="tag pass">Pass</span></td></tr>`)}
-        <details style="margin-top:6px"><summary class="muted">Attempt 1 · tool calls by name</summary>
-        <p>Baseline: ${Object.entries(sc.baseline.tools).map(([t, n]) => `${t} ×${n}`).join(', ')}<br>WebMCP: ${Object.entries(sc.webmcp.tools).map(([t, n]) => `${t} ×${n}`).join(', ')}</p></details>`).join('')}`;
-  },
+const fresh = () => {
+  const lane = () => ({ t: 0, steps: 0, tokens: 0, cost: 0, toolCalls: 0, shots: 0, frame: 'home', feed: [], done: false });
+  return { baseline: lane(), webmcp: lane() };
 };
+const metricsOf = (L) => ({ durationMs: L.t * 1000, steps: L.steps, tokens: L.tokens, costUsd: L.cost, toolCalls: L.toolCalls, screenshots: L.shots });
 
-// ---------- Variant B: scoreboard ----------
-const B = {
-  name: 'Scoreboard',
-  live() {
-    const b = liveMetric(state.baseline), w = liveMetric(state.webmcp);
-    const lane = (k, label, cls) => {
-      const L = state[k];
-      return `<div><div class="a-head"><span class="tag ${cls}">${label}</span>${status(L)}</div>
-        <div class="frame" style="${frameStyle(L)}"></div>
-        <div class="b-chips">${Object.entries(L.tools).map(([t, n]) => `<span class="chip ${isWm(t) ? 'wmtool' : ''}">${t} ×${n}</span>`).join('') || '<span class="muted">no tool calls yet</span>'}</div>
-        <details style="margin-top:6px"><summary class="muted">Tool-call log</summary><div class="feed">${L.feed.map((e) => `<div>${sec(e.at)} ${e.tool}(${fmtInput(e.input)})</div>`).join('')}</div></details></div>`;
-    };
-    return `<div class="b-grid">${lane('baseline', 'Baseline', 'bl')}
-      <div class="b-board"><div class="r hd"><b>Baseline</b><span style="color:#9ca3af">live</span><b>WebMCP</b></div>
-        ${METRICS.map(([k, l, f]) => `<div class="r"><b class="${b[k] < w[k] ? 'lower' : ''}">${f(b[k])}</b><span>${l}</span><b class="${w[k] < b[k] ? 'lower' : ''}">${f(w[k])}</b></div>`).join('')}</div>
-      ${lane('webmcp', 'WebMCP', 'wm')}</div>`;
-  },
-  results() {
-    const bars = (b, w) => METRICS.map(([k, l, f]) => {
-      const max = Math.max(b[k], w[k]) || 1;
-      return `<div class="metric"><b>${l}</b>
-        <div class="bar" style="width:${Math.max(4, b[k] / max * 100)}%;background:var(--bl)">Baseline ${f(b[k])}</div>
-        <div class="bar" style="width:${Math.max(4, w[k] / max * 100)}%;background:var(--wm)">WebMCP ${f(w[k])}</div></div>`;
-    }).join('');
-    const s = RESULTS.summary;
-    return `<h3>Run summary <span class="muted" style="font-weight:400">· Passed: Baseline ${s.baseline.pass}/2, WebMCP ${s.webmcp.pass}/2</span></h3>
-      <div style="max-width:720px" class="bars">${bars(s.baseline, s.webmcp)}</div>
-      ${RESULTS.scenarios.map((sc) => `<details style="margin-top:12px"><summary><b>${sc.id}</b> · Baseline ${sc.baseline.outcome} · WebMCP ${sc.webmcp.outcome}</summary>
-        <div style="max-width:720px" class="bars">${bars(sc.baseline, sc.webmcp)}</div></details>`).join('')}`;
-  },
-};
-
-// ---------- Variant C: timeline ----------
-const C = {
-  name: 'Timeline',
-  live() {
-    const span = 12, now = Math.min(span, Math.max(state.baseline.t, state.webmcp.t));
-    const track = (k, label) => `<div class="c-track"><span class="lbl">${label}</span><div class="area">
-      ${state[k].feed.map((e) => `<span class="c-dot ${e.tool === 'finish' ? 'fin' : isWm(e.tool) ? 'wmtool' : ''}" style="left:${e.at / span * 100}%" title="${e.tool}(${fmtInput(e.input)})">${e.tool === 'finish' ? '✔' : e.tool.replace(/_.*/, '')}</span>`).join('')}
-      <span class="c-now" style="left:${now / span * 100}%"></span></div></div>`;
-    const stats = (k) => { const m = liveMetric(state[k]); return `<div class="c-stats">${METRICS.map(([key, l, f]) => `<span><span class="muted">${l}</span> <b>${f(m[key])}</b></span>`).join('')}</div>`; };
-    return `<div class="c-frames">${LANES.map(([k, label, cls]) => `<div><div class="a-head"><span class="tag ${cls}">${label}</span>${status(state[k])}</div>
-        <div class="frame" style="${frameStyle(state[k])}"></div><div style="margin-top:8px">${stats(k)}</div></div>`).join('')}</div>
-      <div class="c-line">${track('baseline', 'Baseline')}${track('webmcp', 'WebMCP')}
-        <div class="c-axis">${[0, 2, 4, 6, 8, 10, 12].map((s) => `<span style="left:${s / span * 100}%">${s}s</span>`).join('')}</div></div>`;
-  },
-  results() {
-    const s = RESULTS.summary;
-    const pair = (b, w) => `<table><tr><th></th><th>Baseline</th><th>WebMCP</th></tr>${METRICS.map(([k, l, f]) => `<tr><td class="muted">${l}</td><td>${f(b[k])}</td><td>${f(w[k])}</td></tr>`).join('')}</table>`;
-    return `<div class="c-cards">
-      <div class="c-card" style="grid-column:1/-1;background:var(--soft)"><h4><span>Whole Run</span><span>Passed: Baseline ${s.baseline.pass}/2 · WebMCP ${s.webmcp.pass}/2</span></h4>${pair(s.baseline, s.webmcp)}</div>
-      ${RESULTS.scenarios.map((sc) => `<div class="c-card"><h4><span>${sc.id}</span><span><span class="tag ${sc.baseline.outcome}">B ${sc.baseline.outcome}</span> <span class="tag ${sc.webmcp.outcome}">W ${sc.webmcp.outcome}</span></span></h4>
-        ${sc.baseline.reason ? `<p class="muted" style="margin:0 0 6px">Baseline: ${sc.baseline.reason}</p>` : ''}${pair(sc.baseline, sc.webmcp)}</div>`).join('')}</div>`;
-  },
-};
-
-// ---------- Variant D: owner's mix (twin columns + divider, scoreboard below screens, bar results) ----------
-const D = {
-  name: 'Chosen mix',
-  live() {
-    const b = liveMetric(state.baseline), w = liveMetric(state.webmcp);
-    const col = (inner) => `<div class="d-cols">${LANES.map(([k, label, cls]) => `<div>${inner(k, label, cls)}</div>`).join('')}</div>`;
-    return `${col((k, label, cls) => `<div class="a-head"><span class="tag ${cls}">${label}</span>${status(state[k])}</div>
-        <div class="frame" style="${frameStyle(state[k])}"></div>`)}
-      <div class="b-board d-board"><div class="r hd"><b>Baseline</b><span style="color:#9ca3af">live</span><b>WebMCP</b></div>
-        ${METRICS.map(([k, l, f]) => `<div class="r"><b class="${better(b[k], w[k])}">${f(b[k])}</b><span>${l}</span><b class="${better(w[k], b[k])}">${f(w[k])}</b></div>`).join('')}</div>
-      ${col((k) => `<div class="feed">${state[k].feed.slice().reverse().map((e) => `<div><span class="muted">${sec(e.at)}</span> <span class="${isWm(e.tool) ? 'wmtool' : ''}">${e.tool}</span>(${fmtInput(e.input)})</div>`).join('') || '<span class="muted">waiting for first tool call…</span>'}</div>`)}`;
-  },
-  results() {
-    const bars = (b, w) => METRICS.map(([k, l, f]) => {
-      const max = Math.max(b[k], w[k]) || 1;
-      return `<div class="metric"><b>${l}</b>
-        <div class="brow"><div class="bar" style="width:${Math.max(1, b[k] / max * 75)}%;background:var(--bl)"></div><span class="${better(b[k], w[k])}">${f(b[k])}</span></div>
-        <div class="brow"><div class="bar" style="width:${Math.max(1, w[k] / max * 75)}%;background:var(--wm)"></div><span class="${better(w[k], b[k])}">${f(w[k])}</span></div></div>`;
-    }).join('');
-    const legend = `<div class="legend"><span><i style="background:var(--bl)"></i>Baseline</span><span><i style="background:var(--wm)"></i>WebMCP</span>
-      <span class="muted">Values: <b class="lower">green</b> = lower (better), <b class="higher">red</b> = higher</span></div>`;
-    const outcome = (label, cls, r) => `<span class="tag ${cls}">${label}</span> <span class="tag ${r.outcome}">${r.outcome === 'pass' ? 'Pass' : 'Fail'}</span>${r.reason ? ` <span class="muted">${r.reason}</span>` : ''}`;
-    const s = RESULTS.summary;
-    return `${legend}<h3>Run summary <span class="muted" style="font-weight:400">· Passed: Baseline ${s.baseline.pass}/2, WebMCP ${s.webmcp.pass}/2</span></h3>
-      <div style="max-width:720px" class="bars">${bars(s.baseline, s.webmcp)}</div>
-      ${RESULTS.scenarios.map((sc) => `<details class="d-scen"><summary><b>${sc.id}</b>
-          <div class="d-out">${outcome('Baseline', 'bl', sc.baseline)}</div><div class="d-out">${outcome('WebMCP', 'wm', sc.webmcp)}</div></summary>
-        <div style="max-width:720px" class="bars">${bars(sc.baseline, sc.webmcp)}</div>
-        <p class="muted">Attempt 1 tool calls: Baseline ${Object.entries(sc.baseline.tools).map(([t, n]) => `${t} ×${n}`).join(', ')} · WebMCP ${Object.entries(sc.webmcp.tools).map(([t, n]) => `${t} ×${n}`).join(', ')}</p></details>`).join('')}`;
-  },
-};
-
-// ---------- variant switching ----------
-const VARIANTS = { A, B, C, D };
-const keys = Object.keys(VARIANTS);
-let variant = new URLSearchParams(location.search).get('variant') || 'A';
-function render() {
-  const V = VARIANTS[variant];
-  $('vlabel').textContent = `${variant} (${V.name})`;
-  $('liveTitle').textContent = `Scenario 2 of 2 · ${state.scenario} · Attempt 1 of 1`;
-  $('liveBody').innerHTML = V.live();
-  $('resultsBody').innerHTML = V.results();
+// Live section is built once per Run and updated in place, so CSS animations play instead of restarting.
+function buildLive() {
+  $('liveTitle').textContent = 'Scenario 2 of 2 · add-red-shirt-to-cart · Attempt 1 of 1';
+  for (const [k, label, cls] of LANES) {
+    $('lane-' + k).innerHTML = `<div class="lane-head"><span class="pill ${cls}">${label}</span><span class="status running" id="st-${k}">running</span></div>
+      <div class="screen ${cls} on" id="scr-${k}"><img id="img-${k}" src="frames/home.jpg" data-frame="home"><span class="live-dot" id="ld-${k}">LIVE</span></div>
+      <div class="progress"><i id="pg-${k}" style="width:0;background:var(--${cls}-grad)"></i></div>
+      <div class="progress-label" id="pgl-${k}">Step 0 of ${MAX_STEPS}</div>`;
+    $('feed-' + k).innerHTML = '<span class="muted">waiting for first tool call…</span>';
+  }
+  $('board').innerHTML = `<div class="r hd"><b style="color:var(--base-b)">Baseline</b><span>live</span><b style="color:#c4b5fd">WebMCP</b></div>
+    ${METRICS.map(([key, l]) => `<div class="r"><b id="bd-baseline-${key}">0</b><span>${l}</span><b id="bd-webmcp-${key}">0</b></div>`).join('')}`;
+  shown = { baseline: {}, webmcp: {} };
 }
-function cycle(d) {
-  variant = keys[(keys.indexOf(variant) + d + keys.length) % keys.length];
-  history.replaceState(null, '', '?variant=' + variant);
-  render();
+
+function setFrame(k, frame) {
+  const img = $('img-' + k);
+  if (img.dataset.frame === frame) return;
+  img.dataset.frame = frame;
+  const next = img.cloneNode(); next.id = ''; next.src = `frames/${frame}.jpg`; next.style.opacity = 0;
+  img.after(next);
+  requestAnimationFrame(() => requestAnimationFrame(() => { next.style.opacity = 1; }));
+  setTimeout(() => { img.src = next.src; next.remove(); }, 470);
 }
-document.addEventListener('keydown', (e) => {
-  if (e.target.closest('input,textarea,[contenteditable]')) return;
-  if (e.key === 'ArrowLeft') cycle(-1);
-  if (e.key === 'ArrowRight') cycle(1);
-});
-render();
+
+function updateLive() {
+  const m = { baseline: metricsOf(state.baseline), webmcp: metricsOf(state.webmcp) };
+  for (const [k] of LANES) {
+    const L = state[k], other = k === 'baseline' ? 'webmcp' : 'baseline';
+    setFrame(k, L.frame);
+    $('pg-' + k).style.width = (L.steps / MAX_STEPS * 100) + '%';
+    $('pgl-' + k).textContent = `Step ${L.steps} of ${MAX_STEPS}`;
+    for (const [key, , f] of METRICS) {
+      const el = $(`bd-${k}-${key}`), v = m[k][key];
+      el.textContent = f(v);
+      el.classList.remove('lower', 'higher');
+      if (better(v, m[other][key])) el.classList.add(better(v, m[other][key]));
+      if (key !== 'durationMs' && shown[k][key] !== undefined && shown[k][key] !== v) { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
+      shown[k][key] = v;
+    }
+    const feed = $('feed-' + k), have = feed.querySelectorAll('div').length;
+    if (L.feed.length > have) {
+      if (!have) feed.innerHTML = '';
+      for (const e of L.feed.slice(have)) {
+        const d = document.createElement('div');
+        const cls = e.tool === 'finish' ? 'fin' : WEBMCP_TOOLS.includes(e.tool) ? 'wmtool' : '';
+        d.innerHTML = `<span class="t">${e.at.toFixed(1)} s</span> <span class="${cls}">${e.tool}</span>(${fmtInput(e.input)})`;
+        feed.prepend(d);
+      }
+    }
+    if (L.done && !$('scr-' + k).querySelector('.done-badge')) {
+      const ok = L.outcome === 'pass';
+      $('st-' + k).className = 'status ' + L.outcome; $('st-' + k).textContent = ok ? '✔ Pass' : '✖ Fail';
+      $('scr-' + k).classList.remove('on'); $('ld-' + k)?.remove();
+      $('scr-' + k).insertAdjacentHTML('beforeend', `<div class="done-badge"><span style="color:var(--${ok ? 'good' : 'bad'})">${ok ? '✔ Pass' : '✖ ' + L.reason}</span></div>`);
+    }
+  }
+}
+
+function startRun() {
+  state = fresh(); t0 = performance.now();
+  $('setupBody').classList.add('locked');
+  $('runBtn').classList.add('busy'); $('runBtn').textContent = 'Running…';
+  $('results').classList.add('hidden');
+  buildLive(); reveal('live');
+  $('stopBtn').disabled = false;
+  const idx = { baseline: 0, webmcp: 0 };
+  clearInterval(timer);
+  timer = setInterval(() => {
+    const now = (performance.now() - t0) / 1000;
+    for (const [k] of LANES) {
+      const L = state[k], ev = SCRIPTS[k];
+      if (!L.done) L.t = now;
+      while (idx[k] < ev.length && ev[idx[k]][0] <= now) {
+        const [at, kind, arg, frame] = ev[idx[k]++];
+        if (kind === 'model') { L.steps++; L.tokens += arg + 140; L.cost += arg * PRICE_IN + 140 * PRICE_OUT; }
+        else if (kind === 'finish') { L.done = true; L.t = at; L.outcome = 'pass'; L.feed.push({ at, tool: 'finish', input: arg }); }
+        else { L.toolCalls++; L.feed.push({ at, tool: kind, input: arg }); if (kind === 'screenshot') L.shots++; if (frame) L.frame = frame; }
+      }
+    }
+    updateLive();
+    if (state.baseline.done && state.webmcp.done) finish(false);
+  }, 100);
+}
+
+function finish() {
+  clearInterval(timer);
+  for (const [k] of LANES) if (!state[k].done) Object.assign(state[k], { done: true, outcome: 'fail', reason: 'stopped by user' });
+  updateLive();
+  $('setupBody').classList.remove('locked');
+  $('runBtn').classList.remove('busy'); $('runBtn').textContent = 'Run ▶';
+  $('stopBtn').disabled = true;
+  setTimeout(() => { renderResults(); reveal('results'); }, 900);
+}
+
+function reveal(id) {
+  const s = $(id);
+  s.classList.remove('hidden', 'reveal'); void s.offsetWidth; s.classList.add('reveal');
+  setTimeout(() => s.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
+}
+
+function bars(b, w) {
+  return METRICS.map(([k, l, f]) => {
+    const max = Math.max(b[k], w[k]) || 1;
+    return `<div class="metric"><b class="l">${l}</b>
+      <div class="brow"><div class="bar" data-w="${Math.max(0.6, b[k] / max * 78)}" style="background:var(--base-grad)"></div><span class="val ${better(b[k], w[k])}">${f(b[k])}</span></div>
+      <div class="brow"><div class="bar" data-w="${Math.max(0.6, w[k] / max * 78)}" style="background:var(--wm-grad)"></div><span class="val ${better(w[k], b[k])}">${f(w[k])}</span></div></div>`;
+  }).join('');
+}
+function grow(box) {
+  box.classList.remove('shown');
+  box.querySelectorAll('.bar').forEach((el) => { el.style.transition = 'none'; el.style.width = '0'; });
+  void box.offsetWidth;
+  box.querySelectorAll('.bar').forEach((el, i) => { el.style.transition = ''; el.style.transitionDelay = (i * 60) + 'ms'; el.style.width = el.dataset.w + '%'; });
+  box.classList.add('shown');
+}
+const outcome = (label, cls, r) => `<span class="outc"><span class="pill ${cls}">${label}</span><span class="chip ${r.outcome}">${r.outcome === 'pass' ? '✔ Pass' : '✖ Fail'}</span>${r.reason ? `<span class="reason">${r.reason}</span>` : ''}</span>`;
+function renderResults() {
+  const s = RESULTS.summary;
+  $('resultsBody').innerHTML = `<div class="legend"><span><i style="background:var(--base-grad)"></i>Baseline</span><span><i style="background:var(--wm-grad)"></i>WebMCP</span></div>
+    <div class="summary-head"><h3>Run summary</h3><div class="passes">
+      <span class="chip ${s.baseline.pass === s.baseline.of ? 'pass' : 'fail'}">Baseline ${s.baseline.pass}/${s.baseline.of} passed</span>
+      <span class="chip ${s.webmcp.pass === s.webmcp.of ? 'pass' : 'fail'}">WebMCP ${s.webmcp.pass}/${s.webmcp.of} passed</span></div></div>
+    <div id="sumBars">${bars(s.baseline, s.webmcp)}</div>
+    ${RESULTS.scenarios.map((sc, i) => `<div class="scen" id="sc-${i}">
+      <div class="scen-head" onclick="toggleScen(${i})"><span class="chev">›</span><span class="id">${sc.id}</span>${outcome('Baseline', 'base', sc.baseline)}${outcome('WebMCP', 'wm', sc.webmcp)}</div>
+      <div class="scen-body"><div><div class="sb">${bars(sc.baseline, sc.webmcp)}</div>
+        <p class="tools">Attempt 1 tool calls · Baseline: ${Object.entries(sc.baseline.tools).map(([t, n]) => `${t} ×${n}`).join(', ')} · WebMCP: ${Object.entries(sc.webmcp.tools).map(([t, n]) => `${t} ×${n}`).join(', ')}</p></div></div></div>`).join('')}`;
+  setTimeout(() => grow($('sumBars')), 250);
+}
+function toggleScen(i) {
+  const el = $('sc-' + i);
+  el.classList.toggle('open');
+  if (el.classList.contains('open')) setTimeout(() => grow(el.querySelector('.sb')), 120);
+}
 </script>
 </body>
 </html>
