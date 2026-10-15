@@ -5,11 +5,15 @@ Compares how an AI agent completes the same task on the same website with and wi
 ## Language
 
 **Suite**:
-One YAML file describing a single target site, the model settings and a list of Scenarios.
+A list of Scenarios written in YAML; it names no site, model or provider.
 _Avoid_: Config, test file, plan
 
+**Site URL**:
+The address of the target site, entered in the UI for a Run; each Scenario starts there or at its own path on that site.
+_Avoid_: Base URL, target, host
+
 **Scenario**:
-One plain-language task to perform on the Suite's site, with its own Prompt and an optional success check.
+One plain-language task to perform on the Site URL, with its own Prompt, an optional start path and an optional Success check.
 _Avoid_: Test case, job, task
 
 **Prompt**:
