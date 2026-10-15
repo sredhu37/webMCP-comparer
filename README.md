@@ -22,3 +22,19 @@ API keys can be pasted in the UI or put in `.env` (copy `.env.example`).
 ## Demo shop
 
 `demo/` is a small clothing shop on http://localhost:4000 to compare against. It registers WebMCP tools (`search_products`, `get_product`, `add_to_cart`, `view_cart`, and a declarative `checkout` form on `/checkout`) when the browser supports WebMCP, and looks the same without it. Add `?debug` to any URL to see the WebMCP state, the registered tools and the cart. [`demo/sample-suite.yaml`](demo/sample-suite.yaml) is the sample Suite for it.
+
+## Prices
+
+Cost is approximate: token buckets times the rates in [`server/pricing/prices.json`](server/pricing/prices.json), a dated copy of the official pricing pages (USD per million tokens). To use other rates, for example a negotiated discount, create `~/.webmcp-comparer/prices.json` with only the values to change; it is deep merged over the bundled table:
+
+```json
+{
+  "providers": {
+    "anthropic": {
+      "models": { "claude-haiku-5-5": { "tiers": { "standard": { "rates": { "input": 0.08 } } } } }
+    }
+  }
+}
+```
+
+`npm run prices:check` compares the bundled table with the official pricing pages and prints every difference. It never writes files; update `prices.json` by hand.
