@@ -18,3 +18,19 @@ Needs Node 24 or newer. [`just`](https://github.com/casey/just) is optional; eve
 Then open http://localhost:3000.
 
 API keys can be pasted in the UI or put in `.env` (copy `.env.example`).
+
+## Prices
+
+Cost is approximate: token buckets times the rates in [`server/pricing/prices.json`](server/pricing/prices.json), a dated copy of the official pricing pages (USD per million tokens). To use other rates, for example a negotiated discount, create `~/.webmcp-comparer/prices.json` with only the values to change; it is deep merged over the bundled table:
+
+```json
+{
+  "providers": {
+    "anthropic": {
+      "models": { "claude-haiku-5-5": { "tiers": { "standard": { "rates": { "input": 0.08 } } } } }
+    }
+  }
+}
+```
+
+`npm run prices:check` compares the bundled table with the official pricing pages and prints every difference. It never writes files; update `prices.json` by hand.

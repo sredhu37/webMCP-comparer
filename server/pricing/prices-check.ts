@@ -1,1 +1,3 @@
-console.log('prices:check is not implemented yet.');
+import { runPricesCheck } from './official-pages.ts';
+
+process.exitCode = await runPricesCheck();
