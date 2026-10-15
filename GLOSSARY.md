@@ -47,3 +47,11 @@ _Avoid_: MCP tools, site tools
 **Run**:
 One execution of a selected set of Scenarios from a Suite, both Lanes in parallel per Scenario, producing one log and one results file.
 _Avoid_: Session, execution, batch
+
+**Attempt**:
+One repetition of a Scenario within a Run; a Run repeats each selected Scenario as many times as the user chose before starting it.
+_Avoid_: Iteration, trial, retry
+
+**Step**:
+One model call within a Lane; a single Step may contain several tool calls.
+_Avoid_: Turn, iteration
