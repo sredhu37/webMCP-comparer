@@ -1,0 +1,249 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Demo Shop</title>
+<style>
+  body { font-family: system-ui, sans-serif; margin: 0; color: #222; }
+  header { display: flex; gap: 24px; align-items: center; padding: 14px 24px; background: #1f2937; color: #fff; }
+  header a { color: #fff; text-decoration: none; }
+  header .brand { font-weight: 700; font-size: 20px; }
+  header .cart { margin-left: auto; }
+  main { padding: 24px; max-width: 1000px; margin: 0 auto; }
+  form.filters { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 20px; }
+  form.filters input, form.filters select { padding: 6px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 16px; }
+  .card { border: 1px solid #ddd; border-radius: 8px; padding: 12px; }
+  .card a { color: inherit; text-decoration: none; font-weight: 600; }
+  .swatch { display: inline-block; width: 14px; height: 14px; border-radius: 50%; border: 1px solid #999; vertical-align: middle; }
+  .price { font-size: 18px; margin: 6px 0; }
+  table { border-collapse: collapse; width: 100%; }
+  td, th { border-bottom: 1px solid #eee; padding: 8px; text-align: left; }
+  button { padding: 8px 14px; cursor: pointer; }
+  label { display: block; margin: 10px 0 4px; }
+  input[type=text], input[type=email] { width: 320px; padding: 6px; }
+  #debug { position: fixed; bottom: 0; left: 0; right: 0; background: #fffbe6; border-top: 1px solid #e0c200; font: 12px monospace; padding: 6px 10px; white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<header>
+  <a class="brand" href="/">Demo Shop</a>
+  <a href="/search">All products</a>
+  <a class="cart" id="cart-link" href="/cart">Cart (0)</a>
+</header>
+<main id="app"></main>
+<div id="debug" hidden></div>
+
+<script>
+// PROTOTYPE: throwaway demo shop for webMCP-comparer. Every link is a full page load;
+// cart lives in this browser's localStorage, so the two Lanes never share state.
+
+const PRODUCTS = [
+  { id: 'red-shirt-basic',   name: 'Red shirt basic',   category: 'shirts',   color: 'red',   price: 19.99, sizes: ['S', 'M', 'L', 'XL'] },
+  { id: 'red-linen-shirt',   name: 'Red linen shirt',   category: 'shirts',   color: 'red',   price: 29.99, sizes: ['M', 'L'] },
+  { id: 'red-shirt-premium', name: 'Red shirt premium', category: 'shirts',   color: 'red',   price: 34.99, sizes: ['S', 'M', 'L'] },
+  { id: 'blue-oxford-shirt', name: 'Blue oxford shirt', category: 'shirts',   color: 'blue',  price: 27.50, sizes: ['S', 'M', 'L', 'XL'] },
+  { id: 'white-tee',         name: 'White tee',         category: 'shirts',   color: 'white', price: 9.99,  sizes: ['S', 'M', 'L', 'XL'] },
+  { id: 'black-tee',         name: 'Black tee',         category: 'shirts',   color: 'black', price: 9.99,  sizes: ['S', 'M', 'L'] },
+  { id: 'green-polo',        name: 'Green polo',        category: 'shirts',   color: 'green', price: 22.00, sizes: ['M', 'L', 'XL'] },
+  { id: 'red-polo',          name: 'Red polo',          category: 'shirts',   color: 'red',   price: 24.00, sizes: ['L', 'XL'] },
+  { id: 'blue-sneakers',     name: 'Blue sneakers',     category: 'shoes',    color: 'blue',  price: 79.99, sizes: ['40', '41', '42', '43', '44'] },
+  { id: 'white-sneakers',    name: 'White sneakers',    category: 'shoes',    color: 'white', price: 69.99, sizes: ['39', '40', '41', '42'] },
+  { id: 'black-boots',       name: 'Black boots',       category: 'shoes',    color: 'black', price: 119.00, sizes: ['41', '42', '43', '44', '45'] },
+  { id: 'red-runners',       name: 'Red runners',       category: 'shoes',    color: 'red',   price: 89.00, sizes: ['40', '42', '44'] },
+  { id: 'brown-loafers',     name: 'Brown loafers',     category: 'shoes',    color: 'brown', price: 99.00, sizes: ['41', '42', '43'] },
+  { id: 'black-hat',         name: 'Black hat',         category: 'hats',     color: 'black', price: 24.99, sizes: ['one size'] },
+  { id: 'red-cap',           name: 'Red cap',           category: 'hats',     color: 'red',   price: 14.99, sizes: ['one size'] },
+  { id: 'blue-beanie',       name: 'Blue beanie',       category: 'hats',     color: 'blue',  price: 12.00, sizes: ['one size'] },
+  { id: 'straw-hat',         name: 'Straw hat',         category: 'hats',     color: 'beige', price: 29.00, sizes: ['M', 'L'] },
+  { id: 'grey-hoodie',       name: 'Grey hoodie',       category: 'sweaters', color: 'grey',  price: 49.00, sizes: ['S', 'M', 'L', 'XL'] },
+  { id: 'red-hoodie',        name: 'Red hoodie',        category: 'sweaters', color: 'red',   price: 52.00, sizes: ['M', 'L'] },
+  { id: 'navy-sweater',      name: 'Navy sweater',      category: 'sweaters', color: 'blue',  price: 59.00, sizes: ['S', 'M', 'L'] },
+];
+
+const $ = (html) => { document.getElementById('app').innerHTML = html; };
+const money = (n) => '€' + n.toFixed(2);
+const byId = (id) => PRODUCTS.find((p) => p.id === id);
+const cart = () => JSON.parse(localStorage.getItem('cart') || '[]');
+const saveCart = (c) => { localStorage.setItem('cart', JSON.stringify(c)); renderHeader(); };
+const cartCount = () => cart().reduce((n, i) => n + i.quantity, 0);
+const cartTotal = () => cart().reduce((s, i) => s + byId(i.productId).price * i.quantity, 0);
+
+function search({ query = '', color, size, maxPrice, category } = {}) {
+  const q = query.trim().toLowerCase();
+  return PRODUCTS.filter((p) =>
+    (!q || p.name.toLowerCase().includes(q) || p.category.includes(q)) &&
+    (!color || p.color === color.toLowerCase()) &&
+    (!category || p.category === category) &&
+    (!size || p.sizes.includes(String(size))) &&
+    (!maxPrice || p.price <= Number(maxPrice))
+  ).sort((a, b) => a.price - b.price);
+}
+
+function addToCart(productId, size, quantity = 1) {
+  const p = byId(productId);
+  if (!p) throw new Error(`Unknown product "${productId}"`);
+  if (!p.sizes.includes(String(size))) throw new Error(`Size "${size}" not available for ${p.name}. Sizes: ${p.sizes.join(', ')}`);
+  const c = cart();
+  const line = c.find((i) => i.productId === productId && i.size === String(size));
+  if (line) line.quantity += quantity; else c.push({ productId, size: String(size), quantity });
+  saveCart(c);
+  return c;
+}
+
+function placeOrder({ name, email, address }) {
+  if (!cart().length) throw new Error('Cart is empty');
+  const order = { id: 1000 + Math.floor(Math.random() * 9000), name, email, address, items: cart(), total: cartTotal() };
+  localStorage.setItem('lastOrder', JSON.stringify(order));
+  saveCart([]);
+  return order;
+}
+
+function renderHeader() {
+  document.getElementById('cart-link').textContent = `Cart (${cartCount()})`;
+}
+
+function card(p) {
+  return `<div class="card">
+    <a href="/products/${p.id}">${p.name}</a>
+    <div class="price">${money(p.price)}</div>
+    <div><span class="swatch" style="background:${p.color}"></span> ${p.color} · ${p.category}</div>
+  </div>`;
+}
+
+function filtersForm(params) {
+  const v = (k) => params.get(k) ?? '';
+  const opt = (k, vals) => ['', ...vals].map((x) => `<option value="${x}" ${v(k) === x ? 'selected' : ''}>${x || 'any ' + k}</option>`).join('');
+  return `<form class="filters" action="/search">
+    <input name="query" placeholder="Search" value="${v('query')}">
+    <select name="category">${opt('category', ['shirts', 'shoes', 'hats', 'sweaters'])}</select>
+    <select name="color">${opt('color', ['red', 'blue', 'black', 'white', 'green', 'grey', 'brown', 'beige'])}</select>
+    <input name="maxPrice" placeholder="Max price" size="8" value="${v('maxPrice')}">
+    <button>Search</button>
+  </form>`;
+}
+
+const routes = [
+  [/^\/$/, () => $(`<h1>Welcome to Demo Shop</h1>${filtersForm(new URLSearchParams())}
+    <h2>Popular</h2><div class="grid">${['red-shirt-premium', 'blue-sneakers', 'black-hat', 'grey-hoodie'].map((id) => card(byId(id))).join('')}</div>`)],
+  [/^\/search$/, () => {
+    const params = new URLSearchParams(location.search);
+    const results = search(Object.fromEntries(params));
+    $(`<h1>Products</h1>${filtersForm(params)}<p>${results.length} results, cheapest first</p>
+      <div class="grid">${results.map(card).join('')}</div>`);
+  }],
+  [/^\/products\/([\w-]+)$/, (id) => {
+    const p = byId(id);
+    if (!p) return $(`<h1>Product not found</h1>`);
+    $(`<h1>${p.name}</h1><div class="price">${money(p.price)}</div>
+      <p><span class="swatch" style="background:${p.color}"></span> ${p.color} · ${p.category}</p>
+      <form id="add">
+        <label>Size</label><select name="size">${p.sizes.map((s) => `<option>${s}</option>`).join('')}</select>
+        <label>Quantity</label><input name="quantity" type="number" value="1" min="1" style="width:60px">
+        <p><button>Add to cart</button></p>
+      </form><p id="added"></p>`);
+    document.getElementById('add').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const f = new FormData(e.target);
+      addToCart(p.id, f.get('size'), Number(f.get('quantity')));
+      document.getElementById('added').textContent = `Added ${p.name} (${f.get('size')}) to cart.`;
+    });
+  }],
+  [/^\/cart$/, () => {
+    const c = cart();
+    $(`<h1>Your cart</h1>${c.length ? `<table><tr><th>Product</th><th>Size</th><th>Qty</th><th>Price</th></tr>
+      ${c.map((i) => `<tr><td>${byId(i.productId).name}</td><td>${i.size}</td><td>${i.quantity}</td><td>${money(byId(i.productId).price * i.quantity)}</td></tr>`).join('')}
+      </table><p><b>Total: ${money(cartTotal())}</b></p><p><a href="/checkout"><button>Checkout</button></a></p>` : '<p>Your cart is empty.</p>'}`);
+  }],
+  [/^\/checkout$/, () => {
+    if (!cart().length) return $(`<h1>Checkout</h1><p>Your cart is empty.</p>`);
+    $(`<h1>Checkout</h1><p>Total: ${money(cartTotal())}</p>
+      <form id="checkout" toolname="checkout" toolautosubmit
+            tooldescription="Place the order for everything currently in the cart. Requires the buyer's full name, email and shipping address.">
+        <label for="name">Full name</label><input id="name" type="text" name="name" required toolparamdescription="Buyer's full name">
+        <label for="email">Email</label><input id="email" type="email" name="email" required toolparamdescription="Buyer's email address">
+        <label for="address">Address</label><input id="address" type="text" name="address" required toolparamdescription="Shipping address on one line">
+        <p><button>Place order</button></p>
+      </form>`);
+    document.getElementById('checkout').addEventListener('submit', (e) => {
+      e.preventDefault();
+      const order = placeOrder(Object.fromEntries(new FormData(e.target)));
+      if (e.agentInvoked) e.respondWith(Promise.resolve({ orderId: order.id, total: order.total }));
+      setTimeout(() => { location.href = `/order/${order.id}`; }, 50);
+    });
+  }],
+  [/^\/order\/(\d+)$/, (id) => {
+    const o = JSON.parse(localStorage.getItem('lastOrder') || 'null');
+    $(o && String(o.id) === id ? `<h1>Order placed #${o.id}</h1><p>Thank you, ${o.name}. Total ${money(o.total)}. Confirmation sent to ${o.email}.</p>` : `<h1>Order not found</h1>`);
+  }],
+];
+
+function route() {
+  for (const [re, fn] of routes) {
+    const m = location.pathname.match(re);
+    if (m) return fn(...m.slice(1));
+  }
+  $(`<h1>Page not found</h1>`);
+}
+
+// WebMCP: registered only when the browser supports it, so pages look identical with the flag off.
+const text = (v) => ({ content: [{ type: 'text', text: typeof v === 'string' ? v : JSON.stringify(v) }] });
+const productSummary = (p) => ({ id: p.id, name: p.name, price: p.price, color: p.color, category: p.category, sizes: p.sizes });
+function registerTools(mc) {
+  mc.registerTool({
+    name: 'search_products',
+    description: 'Search the catalog. Returns matching products sorted by price, cheapest first.',
+    inputSchema: { type: 'object', properties: {
+      query: { type: 'string', description: 'Free text, e.g. "shirt" or "sneakers"' },
+      color: { type: 'string', description: 'Color filter, e.g. "red"' },
+      size: { type: 'string', description: 'Only products available in this size' },
+      maxPrice: { type: 'number', description: 'Maximum price in EUR' },
+    } },
+    annotations: { readOnlyHint: true },
+    execute: async (input) => text(search(input).map(productSummary)),
+  });
+  mc.registerTool({
+    name: 'get_product',
+    description: 'Get full details of one product by id.',
+    inputSchema: { type: 'object', properties: { id: { type: 'string' } }, required: ['id'] },
+    annotations: { readOnlyHint: true },
+    execute: async ({ id }) => { const p = byId(id); return p ? text(productSummary(p)) : { isError: true, ...text(`Unknown product "${id}"`) }; },
+  });
+  mc.registerTool({
+    name: 'add_to_cart',
+    description: 'Add a product in a given size to the cart.',
+    inputSchema: { type: 'object', properties: {
+      productId: { type: 'string' }, size: { type: 'string' }, quantity: { type: 'number', default: 1 },
+    }, required: ['productId', 'size'] },
+    execute: async ({ productId, size, quantity = 1 }) => {
+      try { addToCart(productId, size, quantity); return text({ cart: cart(), total: cartTotal() }); }
+      catch (e) { return { isError: true, ...text(e.message) }; }
+    },
+  });
+  mc.registerTool({
+    name: 'view_cart',
+    description: 'Show the cart contents and total.',
+    annotations: { readOnlyHint: true },
+    execute: async () => text({ items: cart().map((i) => ({ ...i, name: byId(i.productId).name })), total: cartTotal() }),
+  });
+}
+
+function renderDebug() {
+  if (!new URLSearchParams(location.search).has('debug')) return;
+  const el = document.getElementById('debug');
+  el.hidden = false;
+  const show = async () => {
+    const tools = document.modelContext ? (await document.modelContext.getTools()).map((t) => t.name) : null;
+    el.textContent = `WebMCP: ${document.modelContext ? 'on' : 'off'}   tools: ${tools ? tools.join(', ') : '-'}\ncart: ${JSON.stringify(cart())}`;
+  };
+  show(); setInterval(show, 1000);
+}
+
+renderHeader();
+route();
+if (document.modelContext) registerTools(document.modelContext);
+renderDebug();
+window.shop = { cart, cartTotal, lastOrder: () => JSON.parse(localStorage.getItem('lastOrder') || 'null') };
+</script>
+</body>
+</html>
