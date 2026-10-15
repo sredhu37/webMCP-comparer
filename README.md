@@ -14,10 +14,13 @@ Needs Node 24 or newer. [`just`](https://github.com/casey/just) is optional; eve
 | `npm run demo`                                  | `just demo`         | Demo shop only, on :4000                         |
 | `npm run lint && npm run typecheck && npm test` | `just check`        | Lint, typecheck and test                         |
 | `npm run prices:check`                          | `just prices-check` | Compare the price table with the official pages  |
+| `npm run live-check`                            | `just live-check`   | One tiny real call per model (needs a key)       |
 
 Then open http://localhost:3000.
 
 API keys can be pasted in the UI or put in `.env` (copy `.env.example`).
+
+`npm run live-check` makes one small call per model (effort medium, with a screenshot in a tool result) and prints the usage each provider reports. It uses the keys in the environment or `.env`, skips models without a key, and makes no calls when there is none. Name models to check only those: `npm run live-check -- claude-haiku-5-5`.
 
 ## Demo shop
 

@@ -28,3 +28,7 @@ check:
 # Compare the bundled price table with the official pricing pages
 prices-check:
     npm run prices:check
+
+# One tiny real call per model with effort medium; needs ANTHROPIC_API_KEY and/or OPENAI_API_KEY
+live-check *models:
+    npm run live-check -- {{models}}

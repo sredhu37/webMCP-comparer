@@ -21,12 +21,16 @@
     "format": "prettier --write .",
     "typecheck": "tsc -p tsconfig.json && tsc -p web/tsconfig.json && tsc -p demo/shop/tsconfig.json",
     "test": "vitest run",
-    "prices:check": "node server/pricing/prices-check.ts"
+    "prices:check": "node server/pricing/prices-check.ts",
+    "live-check": "node server/agent/live-check.ts"
   },
   "dependencies": {
+    "@ai-sdk/anthropic": "4.0.81",
+    "@ai-sdk/openai": "4.0.95",
     "@fastify/middie": "9.3.5",
     "@fastify/static": "10.1.6",
     "@vitejs/plugin-react": "6.1.2",
+    "ai": "7.0.142",
     "ajv": "8.20.0",
     "ajv-formats": "3.0.1",
     "concurrently": "10.0.6",
@@ -35,7 +39,8 @@
     "react": "19.3.1",
     "react-dom": "19.3.1",
     "vite": "8.3.4",
-    "yaml": "2.9.1"
+    "yaml": "2.9.1",
+    "zod": "4.6.7"
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
