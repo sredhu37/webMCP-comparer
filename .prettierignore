@@ -3,3 +3,4 @@ runs/
 coverage/
 docs/
 package-lock.json
+demo/sample-suite.yaml

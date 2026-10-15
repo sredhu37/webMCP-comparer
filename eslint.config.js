@@ -17,8 +17,12 @@ export default defineConfig([
     },
   },
   {
-    files: ['server/**/*.ts', 'demo/**/*.ts', '*.{js,ts}'],
+    files: ['server/**/*.ts', 'demo/*.ts', '*.{js,ts}'],
     languageOptions: { globals: globals.node },
+  },
+  {
+    files: ['demo/shop/**/*.ts'],
+    languageOptions: { globals: globals.browser },
   },
   {
     files: ['web/**/*.{ts,tsx}'],

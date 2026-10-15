@@ -19,7 +19,7 @@
     "demo": "node demo/main.ts",
     "lint": "eslint . && prettier --check .",
     "format": "prettier --write .",
-    "typecheck": "tsc -p tsconfig.json && tsc -p web/tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json && tsc -p web/tsconfig.json && tsc -p demo/shop/tsconfig.json",
     "test": "vitest run",
     "prices:check": "node server/pricing/prices-check.ts"
   },

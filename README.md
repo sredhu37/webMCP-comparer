@@ -18,3 +18,7 @@ Needs Node 24 or newer. [`just`](https://github.com/casey/just) is optional; eve
 Then open http://localhost:3000.
 
 API keys can be pasted in the UI or put in `.env` (copy `.env.example`).
+
+## Demo shop
+
+`demo/` is a small clothing shop on http://localhost:4000 to compare against. It registers WebMCP tools (`search_products`, `get_product`, `add_to_cart`, `view_cart`, and a declarative `checkout` form on `/checkout`) when the browser supports WebMCP, and looks the same without it. Add `?debug` to any URL to see the WebMCP state, the registered tools and the cart. [`demo/sample-suite.yaml`](demo/sample-suite.yaml) is the sample Suite for it.
