@@ -105,6 +105,10 @@
   .d-out { margin: 4px 0 0 18px; font-size: 13px; }
   .brow { display: flex; align-items: center; gap: 8px; margin: 3px 0; font-size: 12px; font-variant-numeric: tabular-nums; }
   .brow .bar { margin: 0; padding: 0; min-width: 3px; }
+  .brow span { font-weight: 600; }
+  .higher { color: var(--bad); }
+  .legend { display: flex; gap: 18px; align-items: center; font-size: 13px; margin-bottom: 6px; }
+  .legend i { display: inline-block; width: 14px; height: 14px; border-radius: 3px; vertical-align: -2px; margin-right: 6px; }
 </style>
 </head>
 <body>
@@ -275,6 +279,7 @@ const LANES = [['baseline', 'Baseline', 'bl'], ['webmcp', 'WebMCP', 'wm']];
 const status = (L) => L.done ? `<span class="tag ${L.outcome}">${L.outcome === 'pass' ? 'Pass' : 'Fail'}</span>` : '<span class="tag run">running</span>';
 const frameStyle = (L) => `background-image:url(frames/${L.frame}.jpg)`;
 const isWm = (tool) => WEBMCP_TOOLS.includes(tool);
+const better = (mine, other) => (mine < other ? 'lower' : mine > other ? 'higher' : '');
 const fmtInput = (i) => Object.entries(i).map(([k, v]) => `${k}: ${JSON.stringify(v)}`).join(', ');
 const METRICS = [['durationMs', 'Time', ms], ['steps', 'Steps', num], ['tokens', 'Tokens', num], ['costUsd', 'Cost', usd], ['toolCalls', 'Tool calls', num], ['screenshots', 'Screenshots', num]];
 const liveMetric = (L) => ({ durationMs: L.t * 1000, steps: L.steps, tokens: L.tokens, costUsd: L.cost, toolCalls: total(L.tools), screenshots: L.shots });
@@ -370,19 +375,21 @@ const D = {
     return `${col((k, label, cls) => `<div class="a-head"><span class="tag ${cls}">${label}</span>${status(state[k])}</div>
         <div class="frame" style="${frameStyle(state[k])}"></div>`)}
       <div class="b-board d-board"><div class="r hd"><b>Baseline</b><span style="color:#9ca3af">live</span><b>WebMCP</b></div>
-        ${METRICS.map(([k, l, f]) => `<div class="r"><b class="${b[k] < w[k] ? 'lower' : ''}">${f(b[k])}</b><span>${l}</span><b class="${w[k] < b[k] ? 'lower' : ''}">${f(w[k])}</b></div>`).join('')}</div>
+        ${METRICS.map(([k, l, f]) => `<div class="r"><b class="${better(b[k], w[k])}">${f(b[k])}</b><span>${l}</span><b class="${better(w[k], b[k])}">${f(w[k])}</b></div>`).join('')}</div>
       ${col((k) => `<div class="feed">${state[k].feed.slice().reverse().map((e) => `<div><span class="muted">${sec(e.at)}</span> <span class="${isWm(e.tool) ? 'wmtool' : ''}">${e.tool}</span>(${fmtInput(e.input)})</div>`).join('') || '<span class="muted">waiting for first tool call…</span>'}</div>`)}`;
   },
   results() {
     const bars = (b, w) => METRICS.map(([k, l, f]) => {
       const max = Math.max(b[k], w[k]) || 1;
       return `<div class="metric"><b>${l}</b>
-        <div class="brow"><div class="bar" style="width:${Math.max(1, b[k] / max * 75)}%;background:var(--bl)"></div><span>Baseline ${f(b[k])}</span></div>
-        <div class="brow"><div class="bar" style="width:${Math.max(1, w[k] / max * 75)}%;background:var(--wm)"></div><span>WebMCP ${f(w[k])}</span></div></div>`;
+        <div class="brow"><div class="bar" style="width:${Math.max(1, b[k] / max * 75)}%;background:var(--bl)"></div><span class="${better(b[k], w[k])}">${f(b[k])}</span></div>
+        <div class="brow"><div class="bar" style="width:${Math.max(1, w[k] / max * 75)}%;background:var(--wm)"></div><span class="${better(w[k], b[k])}">${f(w[k])}</span></div></div>`;
     }).join('');
+    const legend = `<div class="legend"><span><i style="background:var(--bl)"></i>Baseline</span><span><i style="background:var(--wm)"></i>WebMCP</span>
+      <span class="muted">Values: <b class="lower">green</b> = lower (better), <b class="higher">red</b> = higher</span></div>`;
     const outcome = (label, cls, r) => `<span class="tag ${cls}">${label}</span> <span class="tag ${r.outcome}">${r.outcome === 'pass' ? 'Pass' : 'Fail'}</span>${r.reason ? ` <span class="muted">${r.reason}</span>` : ''}`;
     const s = RESULTS.summary;
-    return `<h3>Run summary <span class="muted" style="font-weight:400">· Passed: Baseline ${s.baseline.pass}/2, WebMCP ${s.webmcp.pass}/2</span></h3>
+    return `${legend}<h3>Run summary <span class="muted" style="font-weight:400">· Passed: Baseline ${s.baseline.pass}/2, WebMCP ${s.webmcp.pass}/2</span></h3>
       <div style="max-width:720px" class="bars">${bars(s.baseline, s.webmcp)}</div>
       ${RESULTS.scenarios.map((sc) => `<details class="d-scen"><summary><b>${sc.id}</b>
           <div class="d-out">${outcome('Baseline', 'bl', sc.baseline)}</div><div class="d-out">${outcome('WebMCP', 'wm', sc.webmcp)}</div></summary>
