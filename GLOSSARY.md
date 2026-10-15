@@ -16,6 +16,14 @@ _Avoid_: Test case, job, task
 The instructions given to the agent for one Scenario; each Scenario has its own, and both Lanes receive it unchanged.
 _Avoid_: Instruction, query
 
+**Success check**:
+Conditions defined in a Scenario that decide whether a Lane passed; when a Scenario has none, the Lane's agent's own report decides.
+_Avoid_: Assertion, validation, judge
+
+**Outcome**:
+The result of one Lane for one Scenario: Pass, or Fail with a reason.
+_Avoid_: Status, verdict, result
+
 **Lane**:
 One side of a Scenario's comparison, running its own agent and its own Chrome instance.
 _Avoid_: Side, track, variant
