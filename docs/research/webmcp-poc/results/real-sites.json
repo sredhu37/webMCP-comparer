@@ -1,0 +1,305 @@
+{
+  "playwright": "1.64.1",
+  "browserVersion": "156.0.8078.4",
+  "date": "2026-10-15T12:22:10.258Z",
+  "sites": [
+    {
+      "url": "https://googlechromelabs.github.io/webmcp-tools/demos/pizza-maker/",
+      "tools": [
+        {
+          "name": "add_topping",
+          "description": "Add one or more toppings to the pizza",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "topping": {
+                "type": "string",
+                "enum": [
+                  "🍕",
+                  "🍄",
+                  "🌿",
+                  "🍍",
+                  "🫑",
+                  "🥓",
+                  "🧅",
+                  "🫒",
+                  "🌽",
+                  "🌶️",
+                  "🐑"
+                ]
+              },
+              "size": {
+                "type": "string",
+                "enum": [
+                  "Small",
+                  "Medium",
+                  "Large",
+                  "Extra Large"
+                ]
+              },
+              "count": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 50,
+                "description": "Number of toppings to add"
+              }
+            },
+            "required": [
+              "topping"
+            ]
+          }
+        },
+        {
+          "name": "manage_pizza",
+          "description": "Manage pizza state",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "action": {
+                "type": "string",
+                "enum": [
+                  "remove_last",
+                  "reset"
+                ]
+              }
+            },
+            "required": [
+              "action"
+            ]
+          }
+        },
+        {
+          "name": "remove_topping",
+          "description": "Remove a specific topping from the pizza",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "topping": {
+                "type": "string",
+                "enum": [
+                  "🍕",
+                  "🍄",
+                  "🌿",
+                  "🍍",
+                  "🫑",
+                  "🥓",
+                  "🧅",
+                  "🫒",
+                  "🌽",
+                  "🌶️",
+                  "🐑"
+                ]
+              },
+              "all": {
+                "type": "boolean",
+                "description": "Remove all toppings of this type"
+              }
+            },
+            "required": [
+              "topping"
+            ]
+          }
+        },
+        {
+          "name": "set_pizza_size",
+          "description": "Set the pizza size directly or infer it based on the number of people.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "size": {
+                "type": "string",
+                "enum": [
+                  "Small",
+                  "Medium",
+                  "Large",
+                  "Extra Large"
+                ],
+                "description": "The specific size name."
+              },
+              "number_of_persons": {
+                "type": "number",
+                "description": "The number of people eating to help infer the correct size."
+              }
+            }
+          }
+        },
+        {
+          "name": "set_pizza_style",
+          "description": "Set the style of the pizza (colors/theme)",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "style": {
+                "type": "string",
+                "enum": [
+                  "Classic",
+                  "Bianca",
+                  "BBQ",
+                  "Pesto",
+                  "Wales"
+                ]
+              }
+            },
+            "required": [
+              "style"
+            ]
+          }
+        },
+        {
+          "name": "share_pizza",
+          "description": "Get a shareable URL for the current pizza creation"
+        },
+        {
+          "name": "toggle_layer",
+          "description": "Control pizza layers (sauce, cheese). Use \"add\", \"remove\", or \"toggle\".",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "layer": {
+                "type": "string",
+                "enum": [
+                  "sauce-layer",
+                  "cheese-layer"
+                ]
+              },
+              "action": {
+                "type": "string",
+                "enum": [
+                  "add",
+                  "remove",
+                  "toggle"
+                ]
+              }
+            },
+            "required": [
+              "layer"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "url": "https://googlechromelabs.github.io/webmcp-tools/demos/french-bistro/",
+      "tools": [
+        {
+          "name": "book_table_le_petit_bistro",
+          "description": "Initiates a dining reservation request at Le Petit Bistro. Accepts customer details, timing, and seating preferences.",
+          "inputSchema": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string",
+                "description": "Customer's full name (min 2 chars)"
+              },
+              "phone": {
+                "type": "string",
+                "description": "Customer's phone number (min 10 digits)"
+              },
+              "date": {
+                "type": "string",
+                "format": "date",
+                "description": "Reservation date. Must be today or future. (Dates MUST be provided in 'YYYY-MM-DD' format.)"
+              },
+              "time": {
+                "type": "string",
+                "format": "^([01][0-9]|2[0-3]):[0-5][0-9]$",
+                "description": "Reservation time"
+              },
+              "guests": {
+                "type": "string",
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "const": "1",
+                    "title": "1 Person"
+                  },
+                  {
+                    "type": "string",
+                    "const": "2",
+                    "title": "2 People"
+                  },
+                  {
+                    "type": "string",
+                    "const": "3",
+                    "title": "3 People"
+                  },
+                  {
+                    "type": "string",
+                    "const": "4",
+                    "title": "4 People"
+                  },
+                  {
+                    "type": "string",
+                    "const": "5",
+                    "title": "5 People"
+                  },
+                  {
+                    "type": "string",
+                    "const": "6",
+                    "title": "6 People or more"
+                  }
+                ],
+                "enum": [
+                  "1",
+                  "2",
+                  "3",
+                  "4",
+                  "5",
+                  "6"
+                ],
+                "description": "Number of people dining. Must be a string value between '1' and '5', or '6' for parties of 6 or more."
+              },
+              "seating": {
+                "type": "string",
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "const": "Main Dining",
+                    "title": "Main Dining Room"
+                  },
+                  {
+                    "type": "string",
+                    "const": "Terrace",
+                    "title": "Terrace (Outdoor)"
+                  },
+                  {
+                    "type": "string",
+                    "const": "Private Booth",
+                    "title": "Private Booth"
+                  },
+                  {
+                    "type": "string",
+                    "const": "Bar",
+                    "title": "Bar Counter"
+                  }
+                ],
+                "enum": [
+                  "Main Dining",
+                  "Terrace",
+                  "Private Booth",
+                  "Bar"
+                ],
+                "description": "Preferred seating area"
+              },
+              "requests": {
+                "type": "string",
+                "description": "Special requests (allergies, occasions, etc.)"
+              }
+            },
+            "required": [
+              "name",
+              "phone",
+              "date",
+              "time",
+              "guests"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "url": "https://example.com/",
+      "tools": []
+    }
+  ]
+}

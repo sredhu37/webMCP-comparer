@@ -1,0 +1,549 @@
+{
+  "config": "headless-shell",
+  "launch": {
+    "headless": true,
+    "args": [
+      "--enable-features=WebMCP"
+    ]
+  },
+  "playwright": "1.64.1",
+  "node": "v26.7.0",
+  "date": "2026-10-15T12:15:21.313Z",
+  "browserVersion": "156.0.8078.4",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.8078.4 Safari/537.36",
+  "headlessInUA": true,
+  "gotoIndex": {
+    "ok": true,
+    "value": 200,
+    "ms": 26
+  },
+  "mainWorld": {
+    "ok": true,
+    "value": {
+      "documentModelContext": true,
+      "navigatorModelContext": false,
+      "ctor": "ModelContext",
+      "methods": [
+        "executeTool",
+        "getTools",
+        "ontoolactivated",
+        "ontoolcancel",
+        "ontoolchange",
+        "registerTool"
+      ]
+    },
+    "ms": 2
+  },
+  "toolsImmediately": {
+    "ok": true,
+    "value": [
+      {
+        "name": "add",
+        "description": "Add two numbers.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "a": {
+              "type": "number"
+            },
+            "b": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "a",
+            "b"
+          ]
+        },
+        "annotations": {
+          "readOnly": true
+        }
+      },
+      {
+        "name": "contact_us",
+        "description": "Fill the contact form.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "email": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "email"
+          ]
+        }
+      },
+      {
+        "name": "dom_click",
+        "description": "Mutate the DOM so the effect is visible."
+      },
+      {
+        "name": "go_page2",
+        "description": "Navigate to page2."
+      },
+      {
+        "name": "greet",
+        "description": "Return a plain string greeting.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "who": {
+              "type": "string"
+            }
+          }
+        },
+        "annotations": {
+          "untrustedContent": true,
+          "consequential": true
+        }
+      },
+      {
+        "name": "is_error",
+        "description": "Return an MCP isError result."
+      },
+      {
+        "name": "returns_object",
+        "description": "Return a plain object (not MCP content)."
+      },
+      {
+        "name": "search_products",
+        "description": "Search the product catalog by keyword and category.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "Free text keyword"
+            },
+            "category": {
+              "type": "string",
+              "anyOf": [
+                {
+                  "type": "string",
+                  "const": "books",
+                  "title": "Books"
+                },
+                {
+                  "type": "string",
+                  "const": "games",
+                  "title": "Games"
+                }
+              ],
+              "enum": [
+                "books",
+                "games"
+              ],
+              "description": "Product category to filter by."
+            }
+          },
+          "required": [
+            "query"
+          ]
+        }
+      },
+      {
+        "name": "throws",
+        "description": "Throw inside execute."
+      }
+    ],
+    "ms": 3
+  },
+  "toolsAfter1500ms": {
+    "ok": true,
+    "value": [
+      {
+        "name": "add",
+        "description": "Add two numbers.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "a": {
+              "type": "number"
+            },
+            "b": {
+              "type": "number"
+            }
+          },
+          "required": [
+            "a",
+            "b"
+          ]
+        },
+        "annotations": {
+          "readOnly": true
+        }
+      },
+      {
+        "name": "contact_us",
+        "description": "Fill the contact form.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "email": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "email"
+          ]
+        }
+      },
+      {
+        "name": "dom_click",
+        "description": "Mutate the DOM so the effect is visible."
+      },
+      {
+        "name": "go_page2",
+        "description": "Navigate to page2."
+      },
+      {
+        "name": "greet",
+        "description": "Return a plain string greeting.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "who": {
+              "type": "string"
+            }
+          }
+        },
+        "annotations": {
+          "untrustedContent": true,
+          "consequential": true
+        }
+      },
+      {
+        "name": "is_error",
+        "description": "Return an MCP isError result."
+      },
+      {
+        "name": "late_tool",
+        "description": "Registered 1s after load."
+      },
+      {
+        "name": "returns_object",
+        "description": "Return a plain object (not MCP content)."
+      },
+      {
+        "name": "search_products",
+        "description": "Search the product catalog by keyword and category.",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "query": {
+              "type": "string",
+              "description": "Free text keyword"
+            },
+            "category": {
+              "type": "string",
+              "anyOf": [
+                {
+                  "type": "string",
+                  "const": "books",
+                  "title": "Books"
+                },
+                {
+                  "type": "string",
+                  "const": "games",
+                  "title": "Games"
+                }
+              ],
+              "enum": [
+                "books",
+                "games"
+              ],
+              "description": "Product category to filter by."
+            }
+          },
+          "required": [
+            "query"
+          ]
+        }
+      },
+      {
+        "name": "throws",
+        "description": "Throw inside execute."
+      }
+    ],
+    "ms": 6
+  },
+  "call": {
+    "add": {
+      "ok": true,
+      "value": {
+        "content": [
+          {
+            "type": "text",
+            "text": "42"
+          }
+        ]
+      },
+      "ms": 7
+    },
+    "greet": {
+      "ok": true,
+      "value": "hello pw",
+      "ms": 3
+    },
+    "returns_object": {
+      "ok": true,
+      "value": {
+        "ok": true,
+        "items": [
+          1,
+          2
+        ]
+      },
+      "ms": 2
+    },
+    "is_error": {
+      "ok": true,
+      "value": {
+        "isError": true,
+        "content": [
+          {
+            "type": "text",
+            "text": "bad input"
+          }
+        ]
+      },
+      "ms": 2
+    },
+    "throws": {
+      "ok": false,
+      "error": "webMCP.callTool: UnknownError: Tool was executed but the invocation failed. For example, the script function threw an error",
+      "ms": 4
+    },
+    "unknown": {
+      "ok": false,
+      "error": "webMCP.callTool: No WebMCP tool named \"nope\". Available tools: add, contact_us, dom_click, go_page2, greet, is_error, late_tool, returns_object, search_products, throws.",
+      "ms": 1
+    },
+    "add_bad_input": {
+      "ok": true,
+      "value": {
+        "content": [
+          {
+            "type": "text",
+            "text": "xundefined"
+          }
+        ]
+      },
+      "ms": 2
+    },
+    "late_tool": {
+      "ok": true,
+      "value": "late",
+      "ms": 2
+    },
+    "dom_click": {
+      "ok": true,
+      "value": "clicked",
+      "ms": 1
+    },
+    "search_products_autosubmit": {
+      "ok": true,
+      "value": {
+        "results": [
+          "books:dune:1"
+        ],
+        "count": 1
+      },
+      "ms": 2
+    },
+    "contact_us_no_autosubmit": {
+      "ok": false,
+      "error": "webMCP.callTool: Timeout 3000ms exceeded.",
+      "ms": 3004
+    },
+    "xo_allowed_tool_via_frame": {
+      "ok": true,
+      "value": "from http://127.0.0.1:59790",
+      "ms": 2
+    },
+    "child_tool_via_page": {
+      "ok": false,
+      "error": "webMCP.callTool: No WebMCP tool named \"child_tool\". Available tools: add, contact_us, dom_click, go_page2, greet, is_error, late_tool, returns_object, search_products, throws.",
+      "ms": 1
+    },
+    "go_page2": {
+      "ok": true,
+      "value": "navigating",
+      "ms": 4
+    },
+    "onEmptyPage": {
+      "ok": false,
+      "error": "webMCP.callTool: No WebMCP tool named \"add\". The frame does not register any WebMCP tools.",
+      "ms": 1
+    }
+  },
+  "urlAfterCalls": {
+    "ok": true,
+    "value": "http://localhost:59790/index.html",
+    "ms": 1
+  },
+  "pageLogAfterCalls": {
+    "ok": true,
+    "value": "toolchange | toolchange | toolchange | toolchange | toolchange | toolchange | toolchange | toolchange | toolchange | toolchange | toolchange | toolactivated add | toolactivated greet | toolactivated returns_object | toolactivated is_error | toolactivated throws | toolactivated add | toolactivated late_tool | dom_click ran | toolactivated dom_click | search submitted agentInvoked=true {\"query\":\"dune\",\"category\":\"books\"} | toolactivated search_products | toolactivated contact_us | ",
+    "ms": 26
+  },
+  "contactFieldValue": {
+    "ok": true,
+    "value": "a@b.c",
+    "ms": 3
+  },
+  "frames": [
+    {
+      "url": "http://localhost:59790/index.html",
+      "tools": {
+        "ok": true,
+        "value": [
+          "add",
+          "contact_us",
+          "dom_click",
+          "go_page2",
+          "greet",
+          "is_error",
+          "late_tool",
+          "returns_object",
+          "search_products",
+          "throws"
+        ],
+        "ms": 1
+      }
+    },
+    {
+      "url": "http://localhost:59790/child.html",
+      "tools": {
+        "ok": true,
+        "value": [
+          "child_tool"
+        ],
+        "ms": 2
+      }
+    },
+    {
+      "url": "http://127.0.0.1:59790/child.html?name=xo_allowed_tool",
+      "tools": {
+        "ok": true,
+        "value": [
+          "xo_allowed_tool"
+        ],
+        "ms": 1
+      }
+    },
+    {
+      "url": "http://127.0.0.1:59790/child.html?name=xo_default_tool",
+      "tools": {
+        "ok": false,
+        "error": "webMCP.tools: NotAllowedError: Access to the feature \"tools\" is disallowed by permissions policy.",
+        "ms": 2
+      }
+    }
+  ],
+  "mainWorldGetTools": {
+    "ok": true,
+    "value": [
+      "add@http://localhost:59790",
+      "child_tool@http://localhost:59790",
+      "contact_us@http://localhost:59790",
+      "dom_click@http://localhost:59790",
+      "go_page2@http://localhost:59790",
+      "greet@http://localhost:59790",
+      "is_error@http://localhost:59790",
+      "late_tool@http://localhost:59790",
+      "returns_object@http://localhost:59790",
+      "search_products@http://localhost:59790",
+      "throws@http://localhost:59790"
+    ],
+    "ms": 1
+  },
+  "waitForPage2": {
+    "ok": true,
+    "ms": 6
+  },
+  "urlAfterGoPage2": {
+    "ok": true,
+    "value": "http://localhost:59790/page2.html",
+    "ms": 0
+  },
+  "toolsAfterToolNavigation": {
+    "ok": true,
+    "value": [
+      "page2_tool"
+    ],
+    "ms": 3
+  },
+  "gotoEmpty": {
+    "ok": true,
+    "value": 200,
+    "ms": 5
+  },
+  "toolsOnEmptyPage": {
+    "ok": true,
+    "value": [],
+    "ms": 2
+  },
+  "gotoPage2": {
+    "ok": true,
+    "value": 200,
+    "ms": 5
+  },
+  "toolsAfterGotoPage2": {
+    "ok": true,
+    "value": [
+      "page2_tool"
+    ],
+    "ms": 2
+  },
+  "goBack": {
+    "ok": true,
+    "value": "http://localhost:59790/empty.html",
+    "ms": 5
+  },
+  "toolsAfterGoBackToEmpty": {
+    "ok": true,
+    "value": [],
+    "ms": 1
+  },
+  "gotoPolyfill": {
+    "ok": true,
+    "value": 200,
+    "ms": 29
+  },
+  "polyfill": {
+    "mainWorld": {
+      "ok": true,
+      "value": {
+        "hasDocMC": true,
+        "hasNavMC": false,
+        "ctor": "Gg",
+        "sameObj": false,
+        "listTools": [
+          "poly_tool"
+        ]
+      },
+      "ms": 7
+    },
+    "pwTools": {
+      "ok": true,
+      "value": [
+        "poly_tool"
+      ],
+      "ms": 4
+    },
+    "pwCall": {
+      "ok": true,
+      "value": {
+        "content": [
+          {
+            "type": "text",
+            "text": "poly 7"
+          }
+        ]
+      },
+      "ms": 3
+    }
+  }
+}

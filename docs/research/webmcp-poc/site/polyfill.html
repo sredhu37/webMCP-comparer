@@ -1,0 +1,14 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>WebMCP PoC: @mcp-b/global polyfill</title>
+<script src="/vendor/mcp-b-global.iife.js"></script>
+</head>
+<body>polyfill
+<script>
+  document.modelContext.registerTool({
+    name: 'poly_tool',
+    description: 'Registered through @mcp-b/global.',
+    inputSchema: { type: 'object', properties: { x: { type: 'number' } } },
+    execute: async ({ x }) => ({ content: [{ type: 'text', text: 'poly ' + x }] }),
+  });
+</script>
+</body></html>

@@ -1,0 +1,244 @@
+{
+  "config": "no-flag",
+  "launch": {
+    "headless": true,
+    "args": []
+  },
+  "playwright": "1.64.1",
+  "node": "v26.7.0",
+  "date": "2026-10-15T12:15:44.970Z",
+  "browserVersion": "156.0.8078.4",
+  "userAgent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) HeadlessChrome/156.0.8078.4 Safari/537.36",
+  "headlessInUA": true,
+  "gotoIndex": {
+    "ok": true,
+    "value": 200,
+    "ms": 26
+  },
+  "mainWorld": {
+    "ok": true,
+    "value": {
+      "documentModelContext": false,
+      "navigatorModelContext": false,
+      "ctor": null,
+      "methods": null
+    },
+    "ms": 2
+  },
+  "toolsImmediately": {
+    "ok": false,
+    "error": "webMCP.tools: WebMCP is not enabled. Launch the browser with the \"--enable-features=WebMCP\" argument.",
+    "ms": 1
+  },
+  "toolsAfter1500ms": {
+    "ok": false,
+    "error": "webMCP.tools: WebMCP is not enabled. Launch the browser with the \"--enable-features=WebMCP\" argument.",
+    "ms": 3
+  },
+  "call": {
+    "add": {
+      "ok": false,
+      "error": "webMCP.callTool: WebMCP is not enabled. Launch the browser with the \"--enable-features=WebMCP\" argument.",
+      "ms": 2
+    },
+    "greet": {
+      "ok": false,
+      "error": "webMCP.callTool: WebMCP is not enabled. Launch the browser with the \"--enable-features=WebMCP\" argument.",
+      "ms": 1
+    },
+    "returns_object": {
+      "ok": false,
+      "error": "webMCP.callTool: WebMCP is not enabled. Launch the browser with the \"--enable-features=WebMCP\" argument.",
+      "ms": 1
+    },
+    "is_error": {
+      "ok": false,
+      "error": "webMCP.callTool: WebMCP is not enabled. Launch the browser with the \"--enable-features=WebMCP\" argument.",
+      "ms": 1
+    },
+    "throws": {
+      "ok": false,
+      "error": "webMCP.callTool: WebMCP is not enabled. Launch the browser with the \"--enable-features=WebMCP\" argument.",
+      "ms": 0
+    },
+    "unknown": {
+      "ok": false,
+      "error": "webMCP.callTool: WebMCP is not enabled. Launch the browser with the \"--enable-features=WebMCP\" argument.",
+      "ms": 1
+    },
+    "add_bad_input": {
+      "ok": false,
+      "error": "webMCP.callTool: WebMCP is not enabled. Launch the browser with the \"--enable-features=WebMCP\" argument.",
+      "ms": 1
+    },
+    "late_tool": {
+      "ok": false,
+      "error": "webMCP.callTool: WebMCP is not enabled. Launch the browser with the \"--enable-features=WebMCP\" argument.",
+      "ms": 0
+    },
+    "dom_click": {
+      "ok": false,
+      "error": "webMCP.callTool: WebMCP is not enabled. Launch the browser with the \"--enable-features=WebMCP\" argument.",
+      "ms": 1
+    },
+    "search_products_autosubmit": {
+      "ok": false,
+      "error": "webMCP.callTool: WebMCP is not enabled. Launch the browser with the \"--enable-features=WebMCP\" argument.",
+      "ms": 0
+    },
+    "contact_us_no_autosubmit": {
+      "ok": false,
+      "error": "webMCP.callTool: WebMCP is not enabled. Launch the browser with the \"--enable-features=WebMCP\" argument.",
+      "ms": 1
+    },
+    "xo_allowed_tool_via_frame": {
+      "ok": false,
+      "error": "webMCP.callTool: WebMCP is not enabled. Launch the browser with the \"--enable-features=WebMCP\" argument.",
+      "ms": 0
+    },
+    "child_tool_via_page": {
+      "ok": false,
+      "error": "webMCP.callTool: WebMCP is not enabled. Launch the browser with the \"--enable-features=WebMCP\" argument.",
+      "ms": 0
+    },
+    "go_page2": {
+      "ok": false,
+      "error": "webMCP.callTool: WebMCP is not enabled. Launch the browser with the \"--enable-features=WebMCP\" argument.",
+      "ms": 1
+    },
+    "onEmptyPage": {
+      "ok": false,
+      "error": "webMCP.callTool: WebMCP is not enabled. Launch the browser with the \"--enable-features=WebMCP\" argument.",
+      "ms": 1
+    }
+  },
+  "urlAfterCalls": {
+    "ok": true,
+    "value": "http://localhost:59850/index.html",
+    "ms": 0
+  },
+  "pageLogAfterCalls": {
+    "ok": true,
+    "value": "no modelContext | ",
+    "ms": 25
+  },
+  "contactFieldValue": {
+    "ok": true,
+    "value": "",
+    "ms": 3
+  },
+  "frames": [
+    {
+      "url": "http://localhost:59850/index.html",
+      "tools": {
+        "ok": false,
+        "error": "webMCP.tools: WebMCP is not enabled. Launch the browser with the \"--enable-features=WebMCP\" argument.",
+        "ms": 1
+      }
+    },
+    {
+      "url": "http://localhost:59850/child.html",
+      "tools": {
+        "ok": false,
+        "error": "webMCP.tools: WebMCP is not enabled. Launch the browser with the \"--enable-features=WebMCP\" argument.",
+        "ms": 0
+      }
+    },
+    {
+      "url": "http://127.0.0.1:59850/child.html?name=xo_allowed_tool",
+      "tools": {
+        "ok": false,
+        "error": "webMCP.tools: WebMCP is not enabled. Launch the browser with the \"--enable-features=WebMCP\" argument.",
+        "ms": 0
+      }
+    },
+    {
+      "url": "http://127.0.0.1:59850/child.html?name=xo_default_tool",
+      "tools": {
+        "ok": false,
+        "error": "webMCP.tools: WebMCP is not enabled. Launch the browser with the \"--enable-features=WebMCP\" argument.",
+        "ms": 0
+      }
+    }
+  ],
+  "mainWorldGetTools": {
+    "ok": true,
+    "value": "no getTools in main world",
+    "ms": 1
+  },
+  "waitForPage2": {
+    "ok": false,
+    "error": "page.waitForURL: Timeout 8000ms exceeded.",
+    "ms": 8003
+  },
+  "urlAfterGoPage2": {
+    "ok": true,
+    "value": "http://localhost:59850/index.html",
+    "ms": 0
+  },
+  "toolsAfterToolNavigation": {
+    "ok": false,
+    "error": "webMCP.tools: WebMCP is not enabled. Launch the browser with the \"--enable-features=WebMCP\" argument.",
+    "ms": 2
+  },
+  "gotoEmpty": {
+    "ok": true,
+    "value": 200,
+    "ms": 14
+  },
+  "toolsOnEmptyPage": {
+    "ok": false,
+    "error": "webMCP.tools: WebMCP is not enabled. Launch the browser with the \"--enable-features=WebMCP\" argument.",
+    "ms": 1
+  },
+  "gotoPage2": {
+    "ok": true,
+    "value": 200,
+    "ms": 5
+  },
+  "toolsAfterGotoPage2": {
+    "ok": false,
+    "error": "webMCP.tools: WebMCP is not enabled. Launch the browser with the \"--enable-features=WebMCP\" argument.",
+    "ms": 0
+  },
+  "goBack": {
+    "ok": true,
+    "value": "http://localhost:59850/empty.html",
+    "ms": 5
+  },
+  "toolsAfterGoBackToEmpty": {
+    "ok": false,
+    "error": "webMCP.tools: WebMCP is not enabled. Launch the browser with the \"--enable-features=WebMCP\" argument.",
+    "ms": 0
+  },
+  "gotoPolyfill": {
+    "ok": true,
+    "value": 200,
+    "ms": 32
+  },
+  "polyfill": {
+    "mainWorld": {
+      "ok": true,
+      "value": {
+        "hasDocMC": true,
+        "hasNavMC": false,
+        "ctor": "Gg",
+        "sameObj": false,
+        "listTools": [
+          "poly_tool"
+        ]
+      },
+      "ms": 7
+    },
+    "pwTools": {
+      "ok": false,
+      "error": "webMCP.tools: WebMCP is not enabled. Launch the browser with the \"--enable-features=WebMCP\" argument.",
+      "ms": 1
+    },
+    "pwCall": {
+      "ok": false,
+      "error": "webMCP.callTool: WebMCP is not enabled. Launch the browser with the \"--enable-features=WebMCP\" argument.",
+      "ms": 1
+    }
+  }
+}

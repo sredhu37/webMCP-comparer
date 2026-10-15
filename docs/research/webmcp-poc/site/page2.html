@@ -1,0 +1,8 @@
+<!doctype html>
+<html><head><meta charset="utf-8"><title>WebMCP PoC: page2</title></head>
+<body>page2
+<script>
+  const mc = document.modelContext || navigator.modelContext;
+  mc?.registerTool({ name: 'page2_tool', description: 'Only on page2.', execute: async () => 'page2' });
+</script>
+</body></html>

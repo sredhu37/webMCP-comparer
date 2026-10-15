@@ -1,0 +1,95 @@
+<!doctype html>
+<html>
+<head><meta charset="utf-8"><title>WebMCP PoC: index</title></head>
+<body>
+<h1>WebMCP PoC</h1>
+<p id="log"></p>
+
+<!-- Declarative tool with toolautosubmit + respondWith -->
+<form id="search" toolname="search_products" tooldescription="Search the product catalog by keyword and category." toolautosubmit action="/search">
+  <label for="q">Query</label>
+  <input id="q" type="text" name="query" required toolparamdescription="Free text keyword">
+  <select name="category" toolparamdescription="Product category to filter by.">
+    <option value="books">Books</option>
+    <option value="games">Games</option>
+  </select>
+  <button type="submit">Search</button>
+</form>
+
+<!-- Declarative tool WITHOUT toolautosubmit: browser only fills the form -->
+<form id="contact" toolname="contact_us" tooldescription="Fill the contact form." action="/contact">
+  <input type="text" name="email" required>
+  <button type="submit">Send</button>
+</form>
+
+<iframe id="same" src="/child.html" width="300" height="60"></iframe>
+<iframe id="xo-allowed" allow="tools" width="300" height="60"></iframe>
+<iframe id="xo-default" width="300" height="60"></iframe>
+
+<script>
+  const log = (m) => { document.getElementById('log').textContent += m + ' | '; };
+  const mc = document.modelContext || navigator.modelContext;
+  // Cross-origin iframes: same port, different host (localhost vs 127.0.0.1).
+  const other = location.hostname === 'localhost' ? '127.0.0.1' : 'localhost';
+  document.getElementById('xo-allowed').src = `http://${other}:${location.port}/child.html?name=xo_allowed_tool`;
+  document.getElementById('xo-default').src = `http://${other}:${location.port}/child.html?name=xo_default_tool`;
+
+  document.getElementById('search').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const data = Object.fromEntries(new FormData(e.target));
+    log('search submitted agentInvoked=' + e.agentInvoked + ' ' + JSON.stringify(data));
+    if (e.agentInvoked) e.respondWith(Promise.resolve({ results: [`${data.category}:${data.query}:1`], count: 1 }));
+  });
+
+  if (mc) {
+    mc.registerTool({
+      name: 'add',
+      description: 'Add two numbers.',
+      inputSchema: { type: 'object', properties: { a: { type: 'number' }, b: { type: 'number' } }, required: ['a', 'b'] },
+      annotations: { readOnlyHint: true },
+      execute: async ({ a, b }) => ({ content: [{ type: 'text', text: String(a + b) }] }),
+    });
+    mc.registerTool({
+      name: 'greet',
+      description: 'Return a plain string greeting.',
+      inputSchema: { type: 'object', properties: { who: { type: 'string' } } },
+      annotations: { consequentialHint: true, untrustedContentHint: true },
+      execute: async ({ who }) => `hello ${who}`,
+    });
+    mc.registerTool({
+      name: 'returns_object',
+      description: 'Return a plain object (not MCP content).',
+      execute: async () => ({ ok: true, items: [1, 2] }),
+    });
+    mc.registerTool({
+      name: 'is_error',
+      description: 'Return an MCP isError result.',
+      execute: async () => ({ isError: true, content: [{ type: 'text', text: 'bad input' }] }),
+    });
+    mc.registerTool({
+      name: 'throws',
+      description: 'Throw inside execute.',
+      execute: async () => { throw new Error('boom from page'); },
+    });
+    mc.registerTool({
+      name: 'dom_click',
+      description: 'Mutate the DOM so the effect is visible.',
+      execute: async () => { log('dom_click ran'); return 'clicked'; },
+    });
+    mc.registerTool({
+      name: 'go_page2',
+      description: 'Navigate to page2.',
+      execute: async () => { location.href = '/page2.html'; return 'navigating'; },
+    });
+    // Registered after a delay: tests tool list changing without navigation.
+    setTimeout(() => mc.registerTool({
+      name: 'late_tool', description: 'Registered 1s after load.', execute: async () => 'late',
+    }), 1000);
+    mc.addEventListener?.('toolchange', () => log('toolchange'));
+    mc.addEventListener?.('toolactivated', (e) => log('toolactivated ' + e.toolName));
+  } else {
+    log('no modelContext');
+  }
+</script>
+</body>
+</html>
