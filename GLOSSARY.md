@@ -33,11 +33,11 @@ One side of a Scenario's comparison, running its own agent and its own Chrome in
 _Avoid_: Side, track, variant
 
 **Baseline lane**:
-The left Lane, whose agent has Browser tools only.
+The left Lane, whose Chrome runs with WebMCP disabled and whose agent has Browser tools only.
 _Avoid_: Normal flow, control, non-MCP lane
 
 **WebMCP lane**:
-The right Lane, whose agent has Browser tools plus the target site's WebMCP tools.
+The right Lane, whose Chrome runs with WebMCP enabled and whose agent has Browser tools plus the target site's WebMCP tools.
 _Avoid_: MCP lane, treatment
 
 **Browser tools**:
