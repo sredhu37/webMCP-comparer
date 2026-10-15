@@ -1,0 +1,52 @@
+{
+  "name": "webmcp-comparer",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Runs the same Scenario on the same website in a Baseline lane and a WebMCP lane side by side and compares them.",
+  "license": "Apache-2.0",
+  "type": "module",
+  "engines": {
+    "node": ">=24"
+  },
+  "scripts": {
+    "dev": "concurrently --names app,demo --prefix-colors blue,yellow --kill-others-on-fail \"npm:dev:app\" \"npm:dev:demo\"",
+    "dev:app": "node --watch-path=server server/main.ts --dev",
+    "dev:demo": "node --watch-path=demo demo/main.ts",
+    "build": "vite build",
+    "start": "npm run build && concurrently --names app,demo --prefix-colors blue,yellow --kill-others-on-fail \"npm:start:app\" \"npm:start:demo\"",
+    "start:app": "node server/main.ts",
+    "start:demo": "node demo/main.ts",
+    "demo": "node demo/main.ts",
+    "lint": "eslint . && prettier --check .",
+    "format": "prettier --write .",
+    "typecheck": "tsc -p tsconfig.json && tsc -p web/tsconfig.json",
+    "test": "vitest run",
+    "prices:check": "node server/pricing/prices-check.ts"
+  },
+  "dependencies": {
+    "@fastify/middie": "9.3.5",
+    "@fastify/static": "10.1.6",
+    "@vitejs/plugin-react": "6.1.2",
+    "concurrently": "10.0.6",
+    "fastify": "5.12.7",
+    "playwright": "1.64.1",
+    "react": "19.3.1",
+    "react-dom": "19.3.1",
+    "vite": "8.3.4"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@types/node": "24.19.2",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "eslint": "10.12.0",
+    "eslint-config-prettier": "10.1.8",
+    "eslint-plugin-react-hooks": "7.1.1",
+    "eslint-plugin-react-refresh": "0.5.7",
+    "globals": "17.13.0",
+    "prettier": "3.9.10",
+    "typescript": "6.0.3",
+    "typescript-eslint": "8.71.2",
+    "vitest": "5.0.5"
+  }
+}

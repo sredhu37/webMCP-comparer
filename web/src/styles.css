@@ -1,0 +1,26 @@
+:root {
+  color: #1f1d1a;
+  background: #f6f2ea;
+  font-family: system-ui, sans-serif;
+  line-height: 1.5;
+}
+
+body {
+  margin: 0;
+}
+
+main {
+  max-width: 40rem;
+  margin: 4rem auto;
+  padding: 0 1.5rem;
+}
+
+h1 {
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.status {
+  font-family: ui-monospace, monospace;
+  font-size: 0.875rem;
+}
