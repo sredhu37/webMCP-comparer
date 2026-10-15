@@ -93,6 +93,18 @@
   .c-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; }
   .c-card { border: 1px solid var(--line); border-radius: 10px; padding: 12px 14px; }
   .c-card h4 { margin: 0 0 8px; display: flex; justify-content: space-between; }
+
+  /* Variant D: chosen mix */
+  .d-cols { display: grid; grid-template-columns: 1fr 1fr; }
+  .d-cols > div { padding: 0 20px; }
+  .d-cols > div:first-child { padding-left: 0; border-right: 2px solid #d1d5db; }
+  .d-cols > div:last-child { padding-right: 0; }
+  .d-board { max-width: 560px; margin: 18px auto; }
+  .d-scen { margin-top: 12px; border: 1px solid var(--line); border-radius: 10px; padding: 10px 14px; }
+  .d-scen summary { cursor: pointer; }
+  .d-out { margin: 4px 0 0 18px; font-size: 13px; }
+  .brow { display: flex; align-items: center; gap: 8px; margin: 3px 0; font-size: 12px; font-variant-numeric: tabular-nums; }
+  .brow .bar { margin: 0; padding: 0; min-width: 3px; }
 </style>
 </head>
 <body>
@@ -349,8 +361,38 @@ const C = {
   },
 };
 
+// ---------- Variant D: owner's mix (twin columns + divider, scoreboard below screens, bar results) ----------
+const D = {
+  name: 'Chosen mix',
+  live() {
+    const b = liveMetric(state.baseline), w = liveMetric(state.webmcp);
+    const col = (inner) => `<div class="d-cols">${LANES.map(([k, label, cls]) => `<div>${inner(k, label, cls)}</div>`).join('')}</div>`;
+    return `${col((k, label, cls) => `<div class="a-head"><span class="tag ${cls}">${label}</span>${status(state[k])}</div>
+        <div class="frame" style="${frameStyle(state[k])}"></div>`)}
+      <div class="b-board d-board"><div class="r hd"><b>Baseline</b><span style="color:#9ca3af">live</span><b>WebMCP</b></div>
+        ${METRICS.map(([k, l, f]) => `<div class="r"><b class="${b[k] < w[k] ? 'lower' : ''}">${f(b[k])}</b><span>${l}</span><b class="${w[k] < b[k] ? 'lower' : ''}">${f(w[k])}</b></div>`).join('')}</div>
+      ${col((k) => `<div class="feed">${state[k].feed.slice().reverse().map((e) => `<div><span class="muted">${sec(e.at)}</span> <span class="${isWm(e.tool) ? 'wmtool' : ''}">${e.tool}</span>(${fmtInput(e.input)})</div>`).join('') || '<span class="muted">waiting for first tool call…</span>'}</div>`)}`;
+  },
+  results() {
+    const bars = (b, w) => METRICS.map(([k, l, f]) => {
+      const max = Math.max(b[k], w[k]) || 1;
+      return `<div class="metric"><b>${l}</b>
+        <div class="brow"><div class="bar" style="width:${Math.max(1, b[k] / max * 75)}%;background:var(--bl)"></div><span>Baseline ${f(b[k])}</span></div>
+        <div class="brow"><div class="bar" style="width:${Math.max(1, w[k] / max * 75)}%;background:var(--wm)"></div><span>WebMCP ${f(w[k])}</span></div></div>`;
+    }).join('');
+    const outcome = (label, cls, r) => `<span class="tag ${cls}">${label}</span> <span class="tag ${r.outcome}">${r.outcome === 'pass' ? 'Pass' : 'Fail'}</span>${r.reason ? ` <span class="muted">${r.reason}</span>` : ''}`;
+    const s = RESULTS.summary;
+    return `<h3>Run summary <span class="muted" style="font-weight:400">· Passed: Baseline ${s.baseline.pass}/2, WebMCP ${s.webmcp.pass}/2</span></h3>
+      <div style="max-width:720px" class="bars">${bars(s.baseline, s.webmcp)}</div>
+      ${RESULTS.scenarios.map((sc) => `<details class="d-scen"><summary><b>${sc.id}</b>
+          <div class="d-out">${outcome('Baseline', 'bl', sc.baseline)}</div><div class="d-out">${outcome('WebMCP', 'wm', sc.webmcp)}</div></summary>
+        <div style="max-width:720px" class="bars">${bars(sc.baseline, sc.webmcp)}</div>
+        <p class="muted">Attempt 1 tool calls: Baseline ${Object.entries(sc.baseline.tools).map(([t, n]) => `${t} ×${n}`).join(', ')} · WebMCP ${Object.entries(sc.webmcp.tools).map(([t, n]) => `${t} ×${n}`).join(', ')}</p></details>`).join('')}`;
+  },
+};
+
 // ---------- variant switching ----------
-const VARIANTS = { A, B, C };
+const VARIANTS = { A, B, C, D };
 const keys = Object.keys(VARIANTS);
 let variant = new URLSearchParams(location.search).get('variant') || 'A';
 function render() {
