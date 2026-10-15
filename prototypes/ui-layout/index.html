@@ -4,178 +4,184 @@
 <meta charset="utf-8">
 <title>PROTOTYPE: webMCP-comparer UI</title>
 <!--
-  PROTOTYPE (throwaway): the chosen single-page layout (variant D) with colour and motion.
-  Earlier variants A to D: variants-abcd.html. Run data is simulated; live frames are real demo shop screenshots.
+  PROTOTYPE (throwaway): chosen single-page layout, restrained pass.
+  Earlier passes: variants-abcd.html, colour-pass.html. Run data is simulated; live frames are real demo shop screenshots.
 -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
   :root {
-    --bg: #f4f6fb; --ink: #0f172a; --muted: #64748b; --line: #e6e9f2;
-    --base-a: #0ea5e9; --base-b: #22d3ee; --wm-a: #7c3aed; --wm-b: #d946ef;
-    --good: #16a34a; --bad: #dc2626; --night: #0b1020;
-    --base-grad: linear-gradient(90deg, var(--base-a), var(--base-b));
-    --wm-grad: linear-gradient(90deg, var(--wm-a), var(--wm-b));
-    --brand-grad: linear-gradient(90deg, var(--base-a), var(--wm-a) 55%, var(--wm-b));
+    --paper: #f6f5f1; --panel: #fffefb; --ink: #1c1b19; --ink-2: #3d3a35; --muted: #66625a; --rule: #e2dfd6; --rule-2: #cfcbbf;
+    --rail: #22211e; --rail-2: #2e2c28; --rail-ink: #e9e6de; --rail-muted: #a7a297;
+    --base: #a3824f; --base-soft: #efe6d6; --wm: #2350a8; --wm-soft: #e1e8f6;
+    --good: #2f7a38; --good-soft: #e3efe1; --bad: #b42318; --bad-soft: #f7e4e1; --amber: #a15c07; --amber-soft: #f6ead6;
+    --sans: 'IBM Plex Sans', system-ui, sans-serif; --mono: 'IBM Plex Mono', ui-monospace, monospace;
+    --ease: cubic-bezier(.25, 1, .5, 1);
   }
   * { box-sizing: border-box; }
-  body { margin: 0; font: 14px/1.5 Inter, system-ui, sans-serif; color: var(--ink); display: flex; min-height: 100vh;
-         background: radial-gradient(1200px 500px at 80% -10%, #ede9fe 0%, transparent 60%), radial-gradient(900px 400px at 10% 0%, #e0f2fe 0%, transparent 55%), var(--bg); }
+  ::selection { background: var(--wm-soft); color: var(--ink); }
+  :focus-visible { outline: 2px solid var(--wm); outline-offset: 2px; }
+  body { margin: 0; font: 14px/1.5 var(--sans); color: var(--ink); background: var(--paper); display: flex; min-height: 100vh; caret-color: var(--wm); }
+  svg.i { width: 16px; height: 16px; stroke: currentColor; fill: none; stroke-width: 1.75; stroke-linecap: round; stroke-linejoin: round; vertical-align: -3px; flex: none; }
+  .num { font-family: var(--mono); font-variant-numeric: tabular-nums; }
 
-  aside { width: 250px; flex: none; background: var(--night); color: #cbd5e1; padding: 18px 14px; position: sticky; top: 0; height: 100vh; overflow: auto; transition: width .35s cubic-bezier(.2,.8,.2,1); }
-  aside.closed { width: 58px; }
-  aside.closed .list, aside.closed h3 { opacity: 0; pointer-events: none; }
-  aside h3 { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: #94a3b8; margin: 18px 0 10px; transition: opacity .2s; }
-  .toggle { background: #1e293b; color: #e2e8f0; border: 0; border-radius: 10px; width: 32px; height: 32px; cursor: pointer; transition: transform .2s, background .2s; }
-  .toggle:hover { background: #334155; transform: rotate(90deg); }
-  .list { transition: opacity .2s; }
-  .run-item { background: #111a33; border: 1px solid #1e293b; border-radius: 12px; padding: 10px 12px; margin-bottom: 10px; font-size: 12px; transition: transform .2s, border-color .2s, box-shadow .2s; cursor: pointer; }
-  .run-item:hover { transform: translateX(4px); border-color: #6d28d9; box-shadow: 0 6px 20px #6d28d955; }
-  .run-item b { color: #fff; font-size: 13px; display: block; }
-  .mini { display: flex; gap: 6px; margin-top: 8px; align-items: center; }
-  .mini .m { height: 6px; border-radius: 99px; }
-  .run-item .acts { margin-top: 8px; display: flex; gap: 6px; }
-  .run-item .acts span { background: #1e293b; border-radius: 99px; padding: 2px 10px; color: #e2e8f0; }
+  aside { width: 240px; flex: none; background: var(--rail); color: var(--rail-ink); padding: 16px 12px; position: sticky; top: 0; height: 100vh; overflow: auto; transition: width .25s var(--ease); }
+  aside.closed { width: 52px; }
+  aside.closed .list, aside.closed .rail-title { display: none; }
+  .rail-top { display: flex; align-items: center; gap: 10px; }
+  .icon-btn { background: transparent; color: inherit; border: 1px solid #3c3a35; border-radius: 6px; width: 30px; height: 30px; display: grid; place-items: center; cursor: pointer; }
+  .icon-btn:hover { background: var(--rail-2); }
+  .rail-title { font-size: 12px; font-weight: 600; color: var(--rail-muted); }
+  .run-item { padding: 10px; margin-top: 8px; border-radius: 6px; font-size: 12px; color: var(--rail-muted); cursor: pointer; transition: background .15s; }
+  .run-item:hover { background: var(--rail-2); }
+  .run-item b { color: var(--rail-ink); font-size: 13px; font-weight: 500; display: block; }
+  .run-item .score { margin-top: 4px; display: flex; gap: 12px; }
+  .sw { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 5px; }
+  .run-item .acts { margin-top: 6px; display: flex; gap: 12px; }
+  .run-item .acts a { color: var(--rail-ink); text-decoration: none; display: inline-flex; gap: 4px; align-items: center; }
+  .run-item .acts a:hover { text-decoration: underline; text-underline-offset: 3px; }
 
-  main { flex: 1; min-width: 0; padding: 0 32px 80px; }
-  .brand { display: flex; align-items: center; gap: 12px; padding: 22px 0 6px; }
-  .brand h1 { margin: 0; font-size: 24px; background: var(--brand-grad); -webkit-background-clip: text; background-clip: text; color: transparent; letter-spacing: -.02em; }
-  .brand .logo { width: 34px; height: 34px; border-radius: 10px; background: var(--brand-grad); box-shadow: 0 6px 18px #7c3aed55; animation: float 4s ease-in-out infinite; }
-  @keyframes float { 50% { transform: translateY(-3px) rotate(6deg); } }
+  main { flex: 1; min-width: 0; padding: 0 36px 72px; max-width: 1360px; }
+  header.top { display: flex; align-items: baseline; gap: 14px; padding: 22px 0 18px; border-bottom: 1px solid var(--rule); }
+  header.top h1 { margin: 0; font-size: 20px; font-weight: 600; letter-spacing: -.01em; }
+  header.top span { color: var(--muted); font-size: 13px; }
 
-  .card { background: #fff; border-radius: 20px; padding: 24px 26px; margin: 18px 0; box-shadow: 0 1px 2px #0f172a0d, 0 12px 32px #0f172a0f; border: 1px solid #eef0f6; }
-  .card > h2 { margin: 0 0 18px; font-size: 18px; display: flex; align-items: center; gap: 10px; }
-  .card > h2 .num { width: 28px; height: 28px; border-radius: 9px; display: grid; place-items: center; color: #fff; font-size: 14px; background: var(--brand-grad); }
-  .card > h2 small { font-weight: 500; color: var(--muted); font-size: 13px; }
-  .reveal { animation: rise .6s cubic-bezier(.2,.8,.2,1) both; }
-  @keyframes rise { from { opacity: 0; transform: translateY(24px) scale(.99); } }
+  section { padding: 26px 0; border-bottom: 1px solid var(--rule); }
+  section > h2 { margin: 0 0 18px; font-size: 16px; font-weight: 600; display: flex; align-items: baseline; gap: 12px; }
+  section > h2 small { font-weight: 400; color: var(--muted); font-size: 13px; }
   .hidden { display: none; }
   .muted { color: var(--muted); }
 
-  .setup { display: grid; grid-template-columns: 1.25fr 1fr; gap: 26px; transition: opacity .3s, filter .3s; }
-  .setup.locked { opacity: .55; filter: grayscale(.4); pointer-events: none; }
-  label.f { display: block; font-weight: 600; margin: 12px 0 6px; font-size: 13px; }
-  input.t, select.t { width: 100%; padding: 9px 11px; border: 1px solid #dbe1ee; border-radius: 10px; font: inherit; background: #fbfcff; transition: border-color .2s, box-shadow .2s; }
-  input.t:focus, select.t:focus { outline: 0; border-color: var(--wm-a); box-shadow: 0 0 0 4px #7c3aed22; }
-  textarea { width: 100%; height: 236px; font: 12px/1.6 ui-monospace, monospace; padding: 12px 14px; border: 0; border-radius: 12px; background: #0b1020; color: #e2e8f0; box-shadow: inset 0 0 0 1px #1e293b; }
+  .setup { display: grid; grid-template-columns: 1.25fr 1fr; gap: 32px; }
+  .setup.locked { opacity: .5; pointer-events: none; transition: opacity .2s; }
+  label.f { display: block; font-weight: 500; margin: 14px 0 6px; font-size: 13px; }
+  .setup > div > label.f:first-child { margin-top: 0; }
+  input.t, select.t { width: 100%; padding: 8px 10px; border: 1px solid var(--rule-2); border-radius: 6px; font: inherit; background: var(--panel); color: var(--ink); }
+  input.t:disabled { color: var(--muted); background: var(--paper); }
+  input.t:focus, select.t:focus { outline: 0; border-color: var(--wm); box-shadow: 0 0 0 3px var(--wm-soft); }
+  textarea { width: 100%; height: 240px; font: 12.5px/1.6 var(--mono); padding: 12px 14px; border: 1px solid var(--rule-2); border-radius: 6px; background: var(--panel); color: var(--ink-2); resize: vertical; }
+  textarea:focus { outline: 0; border-color: var(--wm); box-shadow: 0 0 0 3px var(--wm-soft); }
   .valid { color: var(--good); font-size: 12px; margin-top: 6px; display: flex; gap: 6px; align-items: center; }
-  .valid::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--good); box-shadow: 0 0 0 4px #16a34a22; }
-  .checks label { display: flex; gap: 10px; align-items: center; padding: 7px 10px; border-radius: 10px; cursor: pointer; transition: background .15s; }
-  .checks label:hover { background: #f5f3ff; }
-  .checks input { accent-color: var(--wm-a); width: 16px; height: 16px; }
-  .links a { color: var(--wm-a); text-decoration: none; font-weight: 500; }
+  .checks { border: 1px solid var(--rule); border-radius: 6px; background: var(--panel); }
+  .checks label { display: flex; gap: 10px; align-items: center; padding: 7px 10px; cursor: pointer; font-family: var(--mono); font-size: 12.5px; }
+  .checks label + label { border-top: 1px solid var(--rule); }
+  .checks label:hover { background: var(--paper); }
+  .checks input { accent-color: var(--wm); }
+  .linkbtn { background: none; border: 0; padding: 0; font: inherit; font-weight: 400; color: var(--wm); cursor: pointer; }
+  .linkbtn:hover { text-decoration: underline; text-underline-offset: 3px; }
   .row { display: flex; gap: 10px; } .row > div { flex: 1; }
-  .run { margin-top: 18px; position: relative; overflow: hidden; border: 0; border-radius: 12px; padding: 12px 28px; font: 600 15px Inter, system-ui; color: #fff; cursor: pointer;
-         background: var(--brand-grad); background-size: 200% 100%; box-shadow: 0 10px 24px #7c3aed44; transition: transform .2s, box-shadow .2s, background-position .6s; }
-  .run:hover { transform: translateY(-2px); box-shadow: 0 14px 30px #7c3aed66; background-position: 100% 0; }
-  .run:active { transform: translateY(0) scale(.98); }
-  .run.busy { pointer-events: none; }
-  .run.busy::after { content: ''; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 30%, #ffffff55 50%, transparent 70%); animation: shimmer 1.2s infinite; }
-  @keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
-  .stop { border: 0; border-radius: 12px; padding: 10px 22px; font: 600 14px Inter, system-ui; color: #fff; background: linear-gradient(90deg, #ef4444, #f97316); cursor: pointer; box-shadow: 0 8px 20px #ef444444; transition: transform .2s; }
-  .stop:hover { transform: translateY(-2px); }
-  .stop:disabled { opacity: .35; box-shadow: none; transform: none; cursor: default; }
+  .actions { margin-top: 20px; display: flex; gap: 12px; align-items: center; }
+  .btn { display: inline-flex; align-items: center; gap: 8px; border-radius: 6px; padding: 9px 18px; font: 500 14px var(--sans); cursor: pointer; border: 1px solid transparent; transition: background .15s, border-color .15s; }
+  .btn.primary { background: var(--ink); color: var(--paper); }
+  .btn.primary:hover { background: #33312d; }
+  .btn.primary[aria-busy=true] { background: var(--ink-2); cursor: progress; }
+  .btn.danger { background: transparent; color: var(--bad); border-color: #e6b8b2; }
+  .btn.danger:hover { background: var(--bad-soft); }
+  .btn:disabled { opacity: .4; cursor: default; }
+  .spinner { width: 14px; height: 14px; border: 2px solid #ffffff55; border-top-color: #fff; border-radius: 50%; animation: spin .8s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
 
-  .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; padding: 3px 12px; border-radius: 99px; color: #fff; }
-  .pill.base { background: var(--base-grad); } .pill.wm { background: var(--wm-grad); }
-  .cols { display: grid; grid-template-columns: 1fr 2px 1fr; gap: 0 24px; }
-  .divider { background: linear-gradient(180deg, transparent, var(--base-b), var(--wm-a), transparent); border-radius: 2px; }
-  .lane-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
-  .status { font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 99px; transition: all .3s; }
-  .status.running { background: #fef3c7; color: #92400e; }
-  .status.running::before { content: ''; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #f59e0b; margin-right: 6px; animation: pulse 1s infinite; }
-  .status.pass { background: #dcfce7; color: var(--good); animation: pop .5s cubic-bezier(.2,1.6,.4,1); }
-  .status.fail { background: #fee2e2; color: var(--bad); animation: pop .5s cubic-bezier(.2,1.6,.4,1); }
-  @keyframes pulse { 50% { opacity: .3; transform: scale(.7); } }
-  @keyframes pop { from { transform: scale(.4); opacity: 0; } }
-  .screen { position: relative; aspect-ratio: 16/10; border-radius: 14px; overflow: hidden; background: #e2e8f0; box-shadow: 0 10px 30px #0f172a1f; transition: box-shadow .4s; }
-  .screen.base.on { box-shadow: 0 0 0 2px var(--base-a), 0 12px 34px #0ea5e944; }
-  .screen.wm.on { box-shadow: 0 0 0 2px var(--wm-a), 0 12px 34px #7c3aed44; }
-  .screen img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity .45s; }
-  .live-dot { position: absolute; bottom: 10px; left: 10px; background: #0b1020cc; color: #fff; font-size: 11px; font-weight: 700; letter-spacing: .08em; padding: 3px 9px; border-radius: 99px; display: flex; align-items: center; gap: 6px; }
-  .live-dot::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: #ef4444; animation: pulse 1s infinite; }
-  .done-badge { position: absolute; inset: 0; display: grid; place-items: center; background: #0b102055; animation: fade .4s both; }
-  .done-badge span { background: #fff; border-radius: 16px; padding: 10px 18px; font-weight: 800; font-size: 18px; animation: pop .5s cubic-bezier(.2,1.6,.4,1) both; }
-  @keyframes fade { from { opacity: 0; } }
-  .progress { height: 6px; background: #eef1f7; border-radius: 99px; margin-top: 12px; overflow: hidden; }
-  .progress i { display: block; height: 100%; border-radius: 99px; transition: width .5s cubic-bezier(.2,.8,.2,1); }
-  .progress-label { font-size: 11px; color: var(--muted); margin-top: 4px; }
+  .lane-name { display: inline-flex; align-items: center; gap: 8px; font-weight: 600; }
+  .lane-name .sw { width: 10px; height: 10px; margin: 0; }
+  .cols { display: grid; grid-template-columns: 1fr 1px 1fr; gap: 0 28px; }
+  .divider { background: var(--rule-2); }
+  .lane-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; min-height: 26px; }
+  .status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 500; padding: 2px 9px; border-radius: 4px; }
+  .status.running { background: var(--amber-soft); color: var(--amber); }
+  .status.running::before { content: ''; width: 6px; height: 6px; border-radius: 50%; background: currentColor; }
+  .status.pass { background: var(--good-soft); color: var(--good); }
+  .status.fail { background: var(--bad-soft); color: var(--bad); }
+  .screen { position: relative; aspect-ratio: 16/10; border: 1px solid var(--rule-2); border-radius: 6px; overflow: hidden; background: #ebe9e2; }
+  .screen img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity .35s var(--ease); }
+  .screen.done img { filter: saturate(.6); opacity: .85; }
+  .meter { display: flex; align-items: center; gap: 10px; margin-top: 10px; font-size: 12px; color: var(--muted); }
+  .meter .track { flex: 1; height: 4px; background: var(--rule); border-radius: 2px; overflow: hidden; }
+  .meter i { display: block; height: 100%; transition: width .4s var(--ease); }
 
-  .board { max-width: 600px; margin: 24px auto; border-radius: 18px; padding: 2px; background: var(--brand-grad); box-shadow: 0 16px 40px #7c3aed33; }
-  .board-in { background: var(--night); border-radius: 16px; overflow: hidden; }
-  .board .r { display: grid; grid-template-columns: 1fr 110px 1fr; text-align: center; padding: 9px 6px; border-top: 1px solid #1e293b; font-variant-numeric: tabular-nums; }
-  .board .hd { border: 0; padding: 12px 6px; }
-  .board .hd b { font-size: 13px; }
-  .board .r span { font-size: 11px; color: #94a3b8; align-self: center; letter-spacing: .04em; text-transform: uppercase; }
-  .board .r b { font-size: 19px; color: #e2e8f0; transition: color .4s; display: inline-block; }
-  .board .r b.bump { animation: bump .35s; }
-  @keyframes bump { 40% { transform: scale(1.18); } }
-  .board .r b.lower { color: #4ade80; }
-  .board .r b.higher { color: #f87171; }
+  .board { width: min(640px, 100%); margin: 26px auto; border: 1px solid var(--rule-2); border-radius: 6px; background: var(--panel); }
+  .board .r { display: grid; grid-template-columns: 1fr 120px 1fr; align-items: center; text-align: center; padding: 8px 12px; }
+  .board .r + .r { border-top: 1px solid var(--rule); }
+  .board .hd { padding: 10px 12px; font-size: 13px; }
+  .board .r .lbl { font-size: 12px; color: var(--muted); }
+  .board .r .v { font-family: var(--mono); font-size: 18px; font-weight: 500; transition: color .3s; }
+  .board .r .v.tick { animation: tick .3s var(--ease); }
+  @keyframes tick { from { opacity: .35; } }
+  .v.lower, .val.lower { color: var(--good); } .v.higher, .val.higher { color: var(--bad); }
+  .board .hd > * { justify-self: center; }
 
-  .feed { font: 12px/1.7 ui-monospace, monospace; height: 190px; overflow: auto; border-radius: 12px; padding: 8px 12px; background: #f8fafc; border: 1px solid var(--line); }
-  .feed div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; animation: slidein .35s cubic-bezier(.2,.8,.2,1) both; }
-  @keyframes slidein { from { opacity: 0; transform: translateX(-14px); background: #ede9fe; } }
+  .feed { font: 12px/1.75 var(--mono); height: 190px; overflow: auto; border: 1px solid var(--rule); border-radius: 6px; padding: 6px 12px; background: var(--panel); scrollbar-width: thin; scrollbar-color: var(--rule-2) transparent; }
+  .feed div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; animation: enter .3s var(--ease); }
+  @keyframes enter { from { opacity: 0; transform: translateY(-4px); } }
   .feed .t { color: var(--muted); }
-  .feed .wmtool { color: var(--wm-a); font-weight: 700; }
-  .feed .fin { color: var(--good); font-weight: 700; }
+  .feed .wmtool { color: var(--wm); font-weight: 500; }
+  .feed .fin { color: var(--good); font-weight: 500; }
 
-  .legend { display: flex; gap: 18px; font-size: 13px; font-weight: 600; margin-bottom: 8px; }
-  .legend i { display: inline-block; width: 26px; height: 10px; border-radius: 99px; margin-right: 8px; }
-  .summary-head { display: flex; align-items: baseline; gap: 14px; margin: 14px 0 4px; }
-  .summary-head h3 { margin: 0; }
-  .passes { display: flex; gap: 8px; }
-  .chip { font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 99px; }
-  .chip.pass { background: #dcfce7; color: var(--good); } .chip.fail { background: #fee2e2; color: var(--bad); }
-  .metric { margin: 12px 0; max-width: 760px; }
-  .metric b.l { font-size: 13px; }
-  .brow { display: flex; align-items: center; gap: 10px; margin: 4px 0; font-variant-numeric: tabular-nums; }
-  .bar { height: 14px; border-radius: 99px; width: 0; min-width: 4px; transition: width 1s cubic-bezier(.2,.8,.2,1); }
-  .val { font-weight: 700; font-size: 13px; opacity: 0; transition: opacity .4s .5s; }
-  .val.lower { color: var(--good); } .val.higher { color: var(--bad); }
-  .shown .val { opacity: 1; }
-  .scen { border: 1px solid var(--line); border-radius: 14px; margin-top: 12px; overflow: hidden; transition: box-shadow .25s, border-color .25s; }
-  .scen:hover { border-color: #c4b5fd; box-shadow: 0 8px 22px #7c3aed1a; }
-  .scen-head { display: flex; align-items: center; gap: 14px; padding: 12px 16px; cursor: pointer; flex-wrap: wrap; }
-  .scen-head .chev { transition: transform .3s; color: var(--wm-a); font-weight: 900; font-size: 18px; }
+  .legend { display: flex; gap: 20px; font-size: 13px; margin-bottom: 4px; }
+  .summary-head { display: flex; align-items: center; gap: 14px; margin: 18px 0 6px; }
+  .summary-head h3 { margin: 0; font-size: 15px; font-weight: 600; }
+  .chip { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; padding: 2px 8px; border-radius: 4px; }
+  .chip.pass { background: var(--good-soft); color: var(--good); } .chip.fail { background: var(--bad-soft); color: var(--bad); }
+  .chip.neutral { background: var(--paper); color: var(--ink-2); border: 1px solid var(--rule); }
+  .metric { display: grid; grid-template-columns: 110px 1fr; gap: 4px 16px; align-items: center; padding: 8px 0; max-width: 860px; }
+  .metric + .metric { border-top: 1px solid var(--rule); }
+  .metric .l { font-size: 13px; color: var(--ink-2); grid-row: span 2; }
+  .brow { display: flex; align-items: center; gap: 10px; }
+  .bar { height: 10px; border-radius: 2px; width: 0; min-width: 2px; transition: width .7s var(--ease); }
+  .val { font: 500 12.5px var(--mono); }
+  .scen { border: 1px solid var(--rule); border-radius: 6px; background: var(--panel); margin-top: 10px; }
+  .scen-head { display: grid; grid-template-columns: 20px minmax(200px, 1fr) auto auto; gap: 16px; align-items: center; padding: 11px 14px; cursor: pointer; width: 100%; background: none; border: 0; font: inherit; color: inherit; text-align: left; }
+  .scen-head:hover { background: var(--paper); }
+  .scen-head .chev { color: var(--muted); transition: transform .2s var(--ease); }
   .scen.open .chev { transform: rotate(90deg); }
-  .scen-head .id { font-weight: 700; min-width: 210px; }
-  .outc { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+  .scen-head .id { font-family: var(--mono); font-size: 13px; }
+  .outc { display: flex; align-items: center; gap: 8px; font-size: 12px; }
   .outc .reason { color: var(--muted); }
-  .scen-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .45s cubic-bezier(.2,.8,.2,1); }
+  .scen-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .3s var(--ease); }
   .scen.open .scen-body { grid-template-rows: 1fr; }
-  .scen-body > div { overflow: hidden; padding: 0 16px; }
-  .scen.open .scen-body > div { padding-bottom: 14px; }
-  .tools { font-size: 12px; color: var(--muted); }
+  .scen-body > div { overflow: hidden; padding: 0 14px 0 50px; }
+  .scen.open .scen-body > div { padding-bottom: 12px; border-top: 1px solid var(--rule); }
+  .tools { font-size: 12px; color: var(--muted); margin: 10px 0 0; }
 
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
 </style>
 </head>
 <body>
+<svg width="0" height="0" style="position:absolute">
+  <symbol id="i-menu" viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M5 12.5l4.5 4.5L19 7.5"/></symbol>
+  <symbol id="i-x" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-play" viewBox="0 0 24 24"><path d="M7 5l12 7-12 7z"/></symbol>
+  <symbol id="i-stop" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="1.5"/></symbol>
+  <symbol id="i-download" viewBox="0 0 24 24"><path d="M12 4v11M7 10.5l5 5 5-5M5 20h14"/></symbol>
+  <symbol id="i-open" viewBox="0 0 24 24"><path d="M9 6h9v9M18 6L7 17"/></symbol>
+  <symbol id="i-chev" viewBox="0 0 24 24"><path d="M9 6l6 6-6 6"/></symbol>
+  <symbol id="i-upload" viewBox="0 0 24 24"><path d="M12 16V5M7 9.5l5-5 5 5M5 20h14"/></symbol>
+</svg>
 <aside id="side">
-  <button class="toggle" onclick="side.classList.toggle('closed')" title="Collapse">☰</button>
-  <h3>Past Runs</h3>
+  <div class="rail-top"><button class="icon-btn" onclick="side.classList.toggle('closed')" aria-label="Collapse past runs"><svg class="i"><use href="#i-menu"/></svg></button><span class="rail-title">Past Runs</span></div>
   <div class="list">
     <div class="run-item"><b>Today 14:30</b>localhost:4000 · Haiku 5.5
-      <div class="mini"><span class="m" style="width:45px;background:var(--base-grad)"></span>3/4 <span class="m" style="width:60px;background:var(--wm-grad)"></span>4/4</div>
-      <div class="acts"><span>Open</span><span>Zip ⬇</span></div></div>
+      <div class="score num"><span><span class="sw" style="background:var(--base)"></span>3/4</span><span><span class="sw" style="background:#6f93d8"></span>4/4</span></div>
+      <div class="acts"><a href="#"><svg class="i"><use href="#i-open"/></svg>Open</a><a href="#"><svg class="i"><use href="#i-download"/></svg>Zip</a></div></div>
     <div class="run-item"><b>Today 11:02</b>shop.example.com · gpt-6-luna
-      <div class="mini"><span class="m" style="width:30px;background:var(--base-grad)"></span>2/4 <span class="m" style="width:60px;background:var(--wm-grad)"></span>4/4</div>
-      <div class="acts"><span>Open</span><span>Zip ⬇</span></div></div>
+      <div class="score num"><span><span class="sw" style="background:var(--base)"></span>2/4</span><span><span class="sw" style="background:#6f93d8"></span>4/4</span></div>
+      <div class="acts"><a href="#"><svg class="i"><use href="#i-open"/></svg>Open</a><a href="#"><svg class="i"><use href="#i-download"/></svg>Zip</a></div></div>
     <div class="run-item"><b>Yesterday 17:45</b>localhost:4000 · Sonnet 5.5
-      <div class="mini"><span class="m" style="width:60px;background:var(--base-grad)"></span>4/4 <span class="m" style="width:60px;background:var(--wm-grad)"></span>4/4</div>
-      <div class="acts"><span>Open</span><span>Zip ⬇</span></div></div>
+      <div class="score num"><span><span class="sw" style="background:var(--base)"></span>4/4</span><span><span class="sw" style="background:#6f93d8"></span>4/4</span></div>
+      <div class="acts"><a href="#"><svg class="i"><use href="#i-open"/></svg>Open</a><a href="#"><svg class="i"><use href="#i-download"/></svg>Zip</a></div></div>
   </div>
 </aside>
 
 <main>
-  <div class="brand"><div class="logo"></div><h1>webMCP-comparer</h1></div>
+  <header class="top"><h1>webMCP-comparer</h1><span>Same task, same site: browser tools only vs. browser tools plus WebMCP</span></header>
 
-  <section class="card" id="setup">
-    <h2><span class="num">1</span>Setup</h2>
+  <section id="setup">
+    <h2>Setup</h2>
     <div class="setup" id="setupBody">
       <div>
-        <label class="f">Site URL</label><input class="t" value="http://localhost:4000">
-        <label class="f">Suite <span class="muted links" style="font-weight:400">· <a href="#">Upload .yaml</a> or edit below</span></label>
-        <textarea spellcheck="false">scenarios:
+        <label class="f" for="url">Site URL</label><input class="t" id="url" value="http://localhost:4000">
+        <label class="f">Suite <button class="linkbtn"><svg class="i"><use href="#i-upload"/></svg> Upload .yaml</button></label>
+        <textarea spellcheck="false" aria-label="Suite YAML">scenarios:
   - id: cheapest-red-shirt-price
     prompt: What does the cheapest red shirt cost?
     success:
@@ -189,10 +195,10 @@
     prompt: Add these sneakers in size 42 to the cart.
   - id: full-checkout
     prompt: Buy one black hat and check out as Jane Doe ...</textarea>
-        <div class="valid">Valid Suite · 4 Scenarios</div>
+        <div class="valid"><svg class="i"><use href="#i-check"/></svg>Valid Suite, 4 Scenarios</div>
       </div>
       <div>
-        <label class="f">Scenarios <span class="links" style="font-weight:400">· <a href="#">Select all</a> · <a href="#">Select none</a></span></label>
+        <label class="f">Scenarios <span style="margin-left:8px"><button class="linkbtn">Select all</button> · <button class="linkbtn">Select none</button></span></label>
         <div class="checks">
           <label><input type="checkbox" checked> cheapest-red-shirt-price</label>
           <label><input type="checkbox" checked> add-red-shirt-to-cart</label>
@@ -203,28 +209,28 @@
           <div><label class="f">Provider</label><select class="t"><option>Anthropic</option><option>OpenAI</option></select></div>
           <div><label class="f">Model</label><select class="t"><option>Haiku 5.5 (recommended)</option><option>Sonnet 5.5 (ok)</option><option>Opus 5.5 (not recommended)</option></select></div>
         </div>
-        <label class="f">API key</label><input class="t" value="Key loaded from .env ✔" disabled>
+        <label class="f">API key</label><input class="t" value="Loaded from .env" disabled>
         <div class="row">
-          <div><label class="f">Repeat</label><input class="t" value="1"></div>
-          <div><label class="f">Max steps</label><input class="t" value="50"></div>
-          <div><label class="f">Max min</label><input class="t" value="5"></div>
-          <div><label class="f">Max $</label><input class="t" value="2.00"></div>
+          <div><label class="f">Repeat</label><input class="t num" value="1"></div>
+          <div><label class="f">Max steps</label><input class="t num" value="50"></div>
+          <div><label class="f">Max minutes</label><input class="t num" value="5"></div>
+          <div><label class="f">Max $</label><input class="t num" value="2.00"></div>
         </div>
-        <button class="run" id="runBtn" onclick="startRun()">Run ▶</button>
+        <div class="actions"><button class="btn primary" id="runBtn" onclick="startRun()"><svg class="i"><use href="#i-play"/></svg>Run 2 Scenarios</button></div>
       </div>
     </div>
   </section>
 
-  <section class="card hidden" id="live">
-    <h2><span class="num">2</span>Live <small id="liveTitle"></small></h2>
+  <section class="hidden" id="live">
+    <h2>Live <small id="liveTitle"></small></h2>
     <div class="cols"><div id="lane-baseline"></div><div class="divider"></div><div id="lane-webmcp"></div></div>
-    <div class="board"><div class="board-in" id="board"></div></div>
+    <div class="board" id="board"></div>
     <div class="cols"><div class="feed" id="feed-baseline"></div><div class="divider"></div><div class="feed" id="feed-webmcp"></div></div>
-    <p style="margin:18px 0 0"><button class="stop" id="stopBtn" onclick="finish(true)">Stop</button></p>
+    <div class="actions"><button class="btn danger" id="stopBtn" onclick="finish()"><svg class="i"><use href="#i-stop"/></svg>Stop Run</button></div>
   </section>
 
-  <section class="card hidden" id="results">
-    <h2><span class="num">3</span>Results</h2>
+  <section class="hidden" id="results">
+    <h2>Results</h2>
     <div id="resultsBody"></div>
   </section>
 </main>
@@ -247,10 +253,11 @@ const SCRIPTS = {
 };
 const WEBMCP_TOOLS = ['search_products', 'add_to_cart', 'get_product', 'view_cart', 'checkout'];
 const PRICE_IN = 0.10 / 1e6, PRICE_OUT = 0.50 / 1e6, MAX_STEPS = 50;
-const LANES = [['baseline', 'Baseline', 'base'], ['webmcp', 'WebMCP', 'wm']];
+const LANES = [['baseline', 'Baseline', 'var(--base)'], ['webmcp', 'WebMCP', 'var(--wm)']];
 const int = (n) => Math.round(n).toLocaleString('en-US');
 const METRICS = [['durationMs', 'Time', (m) => (m / 1000).toFixed(1) + ' s'], ['steps', 'Steps', int], ['tokens', 'Tokens', int],
   ['costUsd', 'Cost', (c) => '$' + c.toFixed(4)], ['toolCalls', 'Tool calls', int], ['screenshots', 'Screenshots', int]];
+const icon = (name) => `<svg class="i"><use href="#i-${name}"/></svg>`;
 
 const RESULTS = {
   summary: {
@@ -270,6 +277,7 @@ const RESULTS = {
 const $ = (id) => document.getElementById(id);
 const better = (mine, other) => (mine < other ? 'lower' : mine > other ? 'higher' : '');
 const fmtInput = (i) => Object.entries(i).map(([k, v]) => `${k}: ${JSON.stringify(v)}`).join(', ');
+const laneName = (label, color) => `<span class="lane-name"><span class="sw" style="background:${color}"></span>${label}</span>`;
 let state, timer, t0, shown;
 
 const fresh = () => {
@@ -278,18 +286,16 @@ const fresh = () => {
 };
 const metricsOf = (L) => ({ durationMs: L.t * 1000, steps: L.steps, tokens: L.tokens, costUsd: L.cost, toolCalls: L.toolCalls, screenshots: L.shots });
 
-// Live section is built once per Run and updated in place, so CSS animations play instead of restarting.
 function buildLive() {
   $('liveTitle').textContent = 'Scenario 2 of 2 · add-red-shirt-to-cart · Attempt 1 of 1';
-  for (const [k, label, cls] of LANES) {
-    $('lane-' + k).innerHTML = `<div class="lane-head"><span class="pill ${cls}">${label}</span><span class="status running" id="st-${k}">running</span></div>
-      <div class="screen ${cls} on" id="scr-${k}"><img id="img-${k}" src="frames/home.jpg" data-frame="home"><span class="live-dot" id="ld-${k}">LIVE</span></div>
-      <div class="progress"><i id="pg-${k}" style="width:0;background:var(--${cls}-grad)"></i></div>
-      <div class="progress-label" id="pgl-${k}">Step 0 of ${MAX_STEPS}</div>`;
-    $('feed-' + k).innerHTML = '<span class="muted">waiting for first tool call…</span>';
+  for (const [k, label, color] of LANES) {
+    $('lane-' + k).innerHTML = `<div class="lane-head">${laneName(label, color)}<span class="status running" id="st-${k}">Running</span></div>
+      <div class="screen" id="scr-${k}"><img id="img-${k}" src="frames/home.jpg" data-frame="home" alt="${label} lane browser"></div>
+      <div class="meter"><span class="num" id="pgl-${k}">Step 0</span><span class="track"><i id="pg-${k}" style="width:0;background:${color}"></i></span><span class="num">limit ${MAX_STEPS}</span></div>`;
+    $('feed-' + k).innerHTML = '<span class="muted">Waiting for the first tool call</span>';
   }
-  $('board').innerHTML = `<div class="r hd"><b style="color:var(--base-b)">Baseline</b><span>live</span><b style="color:#c4b5fd">WebMCP</b></div>
-    ${METRICS.map(([key, l]) => `<div class="r"><b id="bd-baseline-${key}">0</b><span>${l}</span><b id="bd-webmcp-${key}">0</b></div>`).join('')}`;
+  $('board').innerHTML = `<div class="r hd">${laneName('Baseline', 'var(--base)')}<span></span>${laneName('WebMCP', 'var(--wm)')}</div>
+    ${METRICS.map(([key, l]) => `<div class="r"><span class="v" id="bd-baseline-${key}">0</span><span class="lbl">${l}</span><span class="v" id="bd-webmcp-${key}">0</span></div>`).join('')}`;
   shown = { baseline: {}, webmcp: {} };
 }
 
@@ -300,7 +306,7 @@ function setFrame(k, frame) {
   const next = img.cloneNode(); next.id = ''; next.src = `frames/${frame}.jpg`; next.style.opacity = 0;
   img.after(next);
   requestAnimationFrame(() => requestAnimationFrame(() => { next.style.opacity = 1; }));
-  setTimeout(() => { img.src = next.src; next.remove(); }, 470);
+  setTimeout(() => { img.src = next.src; next.remove(); }, 380);
 }
 
 function updateLive() {
@@ -309,13 +315,12 @@ function updateLive() {
     const L = state[k], other = k === 'baseline' ? 'webmcp' : 'baseline';
     setFrame(k, L.frame);
     $('pg-' + k).style.width = (L.steps / MAX_STEPS * 100) + '%';
-    $('pgl-' + k).textContent = `Step ${L.steps} of ${MAX_STEPS}`;
+    $('pgl-' + k).textContent = `Step ${L.steps}`;
     for (const [key, , f] of METRICS) {
       const el = $(`bd-${k}-${key}`), v = m[k][key];
       el.textContent = f(v);
-      el.classList.remove('lower', 'higher');
-      if (better(v, m[other][key])) el.classList.add(better(v, m[other][key]));
-      if (key !== 'durationMs' && shown[k][key] !== undefined && shown[k][key] !== v) { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
+      el.className = 'v ' + better(v, m[other][key]);
+      if (key !== 'durationMs' && shown[k][key] !== undefined && shown[k][key] !== v) { void el.offsetWidth; el.classList.add('tick'); }
       shown[k][key] = v;
     }
     const feed = $('feed-' + k), have = feed.querySelectorAll('div').length;
@@ -324,15 +329,16 @@ function updateLive() {
       for (const e of L.feed.slice(have)) {
         const d = document.createElement('div');
         const cls = e.tool === 'finish' ? 'fin' : WEBMCP_TOOLS.includes(e.tool) ? 'wmtool' : '';
-        d.innerHTML = `<span class="t">${e.at.toFixed(1)} s</span> <span class="${cls}">${e.tool}</span>(${fmtInput(e.input)})`;
+        d.innerHTML = `<span class="t">${e.at.toFixed(1)} s</span>  <span class="${cls}">${e.tool}</span>(${fmtInput(e.input)})`;
         feed.prepend(d);
       }
     }
-    if (L.done && !$('scr-' + k).querySelector('.done-badge')) {
+    const st = $('st-' + k);
+    if (L.done && st.classList.contains('running')) {
       const ok = L.outcome === 'pass';
-      $('st-' + k).className = 'status ' + L.outcome; $('st-' + k).textContent = ok ? '✔ Pass' : '✖ Fail';
-      $('scr-' + k).classList.remove('on'); $('ld-' + k)?.remove();
-      $('scr-' + k).insertAdjacentHTML('beforeend', `<div class="done-badge"><span style="color:var(--${ok ? 'good' : 'bad'})">${ok ? '✔ Pass' : '✖ ' + L.reason}</span></div>`);
+      st.className = 'status ' + L.outcome;
+      st.innerHTML = `${icon(ok ? 'check' : 'x')}${ok ? 'Pass' : 'Fail: ' + L.reason} <span class="num" style="opacity:.8">${L.t.toFixed(1)} s</span>`;
+      $('scr-' + k).classList.add('done');
     }
   }
 }
@@ -340,9 +346,9 @@ function updateLive() {
 function startRun() {
   state = fresh(); t0 = performance.now();
   $('setupBody').classList.add('locked');
-  $('runBtn').classList.add('busy'); $('runBtn').textContent = 'Running…';
+  $('runBtn').setAttribute('aria-busy', 'true'); $('runBtn').innerHTML = '<span class="spinner"></span>Running';
   $('results').classList.add('hidden');
-  buildLive(); reveal('live');
+  buildLive(); show('live');
   $('stopBtn').disabled = false;
   const idx = { baseline: 0, webmcp: 0 };
   clearInterval(timer);
@@ -359,7 +365,7 @@ function startRun() {
       }
     }
     updateLive();
-    if (state.baseline.done && state.webmcp.done) finish(false);
+    if (state.baseline.done && state.webmcp.done) finish();
   }, 100);
 }
 
@@ -368,50 +374,48 @@ function finish() {
   for (const [k] of LANES) if (!state[k].done) Object.assign(state[k], { done: true, outcome: 'fail', reason: 'stopped by user' });
   updateLive();
   $('setupBody').classList.remove('locked');
-  $('runBtn').classList.remove('busy'); $('runBtn').textContent = 'Run ▶';
+  $('runBtn').removeAttribute('aria-busy'); $('runBtn').innerHTML = `${icon('play')}Run 2 Scenarios`;
   $('stopBtn').disabled = true;
-  setTimeout(() => { renderResults(); reveal('results'); }, 900);
+  setTimeout(() => { renderResults(); show('results'); }, 700);
 }
 
-function reveal(id) {
-  const s = $(id);
-  s.classList.remove('hidden', 'reveal'); void s.offsetWidth; s.classList.add('reveal');
-  setTimeout(() => s.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
+function show(id) {
+  $(id).classList.remove('hidden');
+  setTimeout(() => $(id).scrollIntoView({ behavior: 'smooth', block: 'start' }), 60);
 }
 
 function bars(b, w) {
   return METRICS.map(([k, l, f]) => {
     const max = Math.max(b[k], w[k]) || 1;
-    return `<div class="metric"><b class="l">${l}</b>
-      <div class="brow"><div class="bar" data-w="${Math.max(0.6, b[k] / max * 78)}" style="background:var(--base-grad)"></div><span class="val ${better(b[k], w[k])}">${f(b[k])}</span></div>
-      <div class="brow"><div class="bar" data-w="${Math.max(0.6, w[k] / max * 78)}" style="background:var(--wm-grad)"></div><span class="val ${better(w[k], b[k])}">${f(w[k])}</span></div></div>`;
+    return `<div class="metric"><span class="l">${l}</span>
+      <div class="brow"><div class="bar" data-w="${b[k] / max * 80}" style="background:var(--base)"></div><span class="val ${better(b[k], w[k])}">${f(b[k])}</span></div>
+      <div class="brow"><div class="bar" data-w="${w[k] / max * 80}" style="background:var(--wm)"></div><span class="val ${better(w[k], b[k])}">${f(w[k])}</span></div></div>`;
   }).join('');
 }
 function grow(box) {
-  box.classList.remove('shown');
   box.querySelectorAll('.bar').forEach((el) => { el.style.transition = 'none'; el.style.width = '0'; });
   void box.offsetWidth;
-  box.querySelectorAll('.bar').forEach((el, i) => { el.style.transition = ''; el.style.transitionDelay = (i * 60) + 'ms'; el.style.width = el.dataset.w + '%'; });
-  box.classList.add('shown');
+  box.querySelectorAll('.bar').forEach((el) => { el.style.transition = ''; el.style.width = el.dataset.w + '%'; });
 }
-const outcome = (label, cls, r) => `<span class="outc"><span class="pill ${cls}">${label}</span><span class="chip ${r.outcome}">${r.outcome === 'pass' ? '✔ Pass' : '✖ Fail'}</span>${r.reason ? `<span class="reason">${r.reason}</span>` : ''}</span>`;
+const outcome = (label, color, r) => `<span class="outc">${laneName(label, color)}<span class="chip ${r.outcome}">${icon(r.outcome === 'pass' ? 'check' : 'x')}${r.outcome === 'pass' ? 'Pass' : 'Fail'}</span>${r.reason ? `<span class="reason">${r.reason}</span>` : ''}</span>`;
 function renderResults() {
   const s = RESULTS.summary;
-  $('resultsBody').innerHTML = `<div class="legend"><span><i style="background:var(--base-grad)"></i>Baseline</span><span><i style="background:var(--wm-grad)"></i>WebMCP</span></div>
-    <div class="summary-head"><h3>Run summary</h3><div class="passes">
-      <span class="chip ${s.baseline.pass === s.baseline.of ? 'pass' : 'fail'}">Baseline ${s.baseline.pass}/${s.baseline.of} passed</span>
-      <span class="chip ${s.webmcp.pass === s.webmcp.of ? 'pass' : 'fail'}">WebMCP ${s.webmcp.pass}/${s.webmcp.of} passed</span></div></div>
+  $('resultsBody').innerHTML = `<div class="legend">${laneName('Baseline', 'var(--base)')}${laneName('WebMCP', 'var(--wm)')}</div>
+    <div class="summary-head"><h3>Run summary</h3>
+      <span class="chip ${s.baseline.pass === s.baseline.of ? 'pass' : 'fail'}">Baseline passed <span class="num">${s.baseline.pass}/${s.baseline.of}</span></span>
+      <span class="chip ${s.webmcp.pass === s.webmcp.of ? 'pass' : 'fail'}">WebMCP passed <span class="num">${s.webmcp.pass}/${s.webmcp.of}</span></span></div>
     <div id="sumBars">${bars(s.baseline, s.webmcp)}</div>
+    <div class="summary-head"><h3>Scenarios</h3></div>
     ${RESULTS.scenarios.map((sc, i) => `<div class="scen" id="sc-${i}">
-      <div class="scen-head" onclick="toggleScen(${i})"><span class="chev">›</span><span class="id">${sc.id}</span>${outcome('Baseline', 'base', sc.baseline)}${outcome('WebMCP', 'wm', sc.webmcp)}</div>
+      <button class="scen-head" aria-expanded="false" onclick="toggleScen(${i})"><span class="chev">${icon('chev')}</span><span class="id">${sc.id}</span>${outcome('Baseline', 'var(--base)', sc.baseline)}${outcome('WebMCP', 'var(--wm)', sc.webmcp)}</button>
       <div class="scen-body"><div><div class="sb">${bars(sc.baseline, sc.webmcp)}</div>
-        <p class="tools">Attempt 1 tool calls · Baseline: ${Object.entries(sc.baseline.tools).map(([t, n]) => `${t} ×${n}`).join(', ')} · WebMCP: ${Object.entries(sc.webmcp.tools).map(([t, n]) => `${t} ×${n}`).join(', ')}</p></div></div></div>`).join('')}`;
-  setTimeout(() => grow($('sumBars')), 250);
+        <p class="tools">Attempt 1 tool calls. Baseline: ${Object.entries(sc.baseline.tools).map(([t, n]) => `${t} ×${n}`).join(', ')}. WebMCP: ${Object.entries(sc.webmcp.tools).map(([t, n]) => `${t} ×${n}`).join(', ')}.</p></div></div></div>`).join('')}`;
+  setTimeout(() => grow($('sumBars')), 200);
 }
 function toggleScen(i) {
-  const el = $('sc-' + i);
-  el.classList.toggle('open');
-  if (el.classList.contains('open')) setTimeout(() => grow(el.querySelector('.sb')), 120);
+  const el = $('sc-' + i), open = el.classList.toggle('open');
+  el.querySelector('.scen-head').setAttribute('aria-expanded', open);
+  if (open) setTimeout(() => grow(el.querySelector('.sb')), 80);
 }
 </script>
 </body>

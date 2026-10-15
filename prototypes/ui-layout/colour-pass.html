@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>PROTOTYPE: webMCP-comparer UI</title>
+<!--
+  PROTOTYPE (throwaway): the chosen single-page layout (variant D) with colour and motion.
+  Earlier variants A to D: variants-abcd.html. Run data is simulated; live frames are real demo shop screenshots.
+-->
+<style>
+  :root {
+    --bg: #f4f6fb; --ink: #0f172a; --muted: #64748b; --line: #e6e9f2;
+    --base-a: #0ea5e9; --base-b: #22d3ee; --wm-a: #7c3aed; --wm-b: #d946ef;
+    --good: #16a34a; --bad: #dc2626; --night: #0b1020;
+    --base-grad: linear-gradient(90deg, var(--base-a), var(--base-b));
+    --wm-grad: linear-gradient(90deg, var(--wm-a), var(--wm-b));
+    --brand-grad: linear-gradient(90deg, var(--base-a), var(--wm-a) 55%, var(--wm-b));
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; font: 14px/1.5 Inter, system-ui, sans-serif; color: var(--ink); display: flex; min-height: 100vh;
+         background: radial-gradient(1200px 500px at 80% -10%, #ede9fe 0%, transparent 60%), radial-gradient(900px 400px at 10% 0%, #e0f2fe 0%, transparent 55%), var(--bg); }
+
+  aside { width: 250px; flex: none; background: var(--night); color: #cbd5e1; padding: 18px 14px; position: sticky; top: 0; height: 100vh; overflow: auto; transition: width .35s cubic-bezier(.2,.8,.2,1); }
+  aside.closed { width: 58px; }
+  aside.closed .list, aside.closed h3 { opacity: 0; pointer-events: none; }
+  aside h3 { font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: #94a3b8; margin: 18px 0 10px; transition: opacity .2s; }
+  .toggle { background: #1e293b; color: #e2e8f0; border: 0; border-radius: 10px; width: 32px; height: 32px; cursor: pointer; transition: transform .2s, background .2s; }
+  .toggle:hover { background: #334155; transform: rotate(90deg); }
+  .list { transition: opacity .2s; }
+  .run-item { background: #111a33; border: 1px solid #1e293b; border-radius: 12px; padding: 10px 12px; margin-bottom: 10px; font-size: 12px; transition: transform .2s, border-color .2s, box-shadow .2s; cursor: pointer; }
+  .run-item:hover { transform: translateX(4px); border-color: #6d28d9; box-shadow: 0 6px 20px #6d28d955; }
+  .run-item b { color: #fff; font-size: 13px; display: block; }
+  .mini { display: flex; gap: 6px; margin-top: 8px; align-items: center; }
+  .mini .m { height: 6px; border-radius: 99px; }
+  .run-item .acts { margin-top: 8px; display: flex; gap: 6px; }
+  .run-item .acts span { background: #1e293b; border-radius: 99px; padding: 2px 10px; color: #e2e8f0; }
+
+  main { flex: 1; min-width: 0; padding: 0 32px 80px; }
+  .brand { display: flex; align-items: center; gap: 12px; padding: 22px 0 6px; }
+  .brand h1 { margin: 0; font-size: 24px; background: var(--brand-grad); -webkit-background-clip: text; background-clip: text; color: transparent; letter-spacing: -.02em; }
+  .brand .logo { width: 34px; height: 34px; border-radius: 10px; background: var(--brand-grad); box-shadow: 0 6px 18px #7c3aed55; animation: float 4s ease-in-out infinite; }
+  @keyframes float { 50% { transform: translateY(-3px) rotate(6deg); } }
+
+  .card { background: #fff; border-radius: 20px; padding: 24px 26px; margin: 18px 0; box-shadow: 0 1px 2px #0f172a0d, 0 12px 32px #0f172a0f; border: 1px solid #eef0f6; }
+  .card > h2 { margin: 0 0 18px; font-size: 18px; display: flex; align-items: center; gap: 10px; }
+  .card > h2 .num { width: 28px; height: 28px; border-radius: 9px; display: grid; place-items: center; color: #fff; font-size: 14px; background: var(--brand-grad); }
+  .card > h2 small { font-weight: 500; color: var(--muted); font-size: 13px; }
+  .reveal { animation: rise .6s cubic-bezier(.2,.8,.2,1) both; }
+  @keyframes rise { from { opacity: 0; transform: translateY(24px) scale(.99); } }
+  .hidden { display: none; }
+  .muted { color: var(--muted); }
+
+  .setup { display: grid; grid-template-columns: 1.25fr 1fr; gap: 26px; transition: opacity .3s, filter .3s; }
+  .setup.locked { opacity: .55; filter: grayscale(.4); pointer-events: none; }
+  label.f { display: block; font-weight: 600; margin: 12px 0 6px; font-size: 13px; }
+  input.t, select.t { width: 100%; padding: 9px 11px; border: 1px solid #dbe1ee; border-radius: 10px; font: inherit; background: #fbfcff; transition: border-color .2s, box-shadow .2s; }
+  input.t:focus, select.t:focus { outline: 0; border-color: var(--wm-a); box-shadow: 0 0 0 4px #7c3aed22; }
+  textarea { width: 100%; height: 236px; font: 12px/1.6 ui-monospace, monospace; padding: 12px 14px; border: 0; border-radius: 12px; background: #0b1020; color: #e2e8f0; box-shadow: inset 0 0 0 1px #1e293b; }
+  .valid { color: var(--good); font-size: 12px; margin-top: 6px; display: flex; gap: 6px; align-items: center; }
+  .valid::before { content: ''; width: 8px; height: 8px; border-radius: 50%; background: var(--good); box-shadow: 0 0 0 4px #16a34a22; }
+  .checks label { display: flex; gap: 10px; align-items: center; padding: 7px 10px; border-radius: 10px; cursor: pointer; transition: background .15s; }
+  .checks label:hover { background: #f5f3ff; }
+  .checks input { accent-color: var(--wm-a); width: 16px; height: 16px; }
+  .links a { color: var(--wm-a); text-decoration: none; font-weight: 500; }
+  .row { display: flex; gap: 10px; } .row > div { flex: 1; }
+  .run { margin-top: 18px; position: relative; overflow: hidden; border: 0; border-radius: 12px; padding: 12px 28px; font: 600 15px Inter, system-ui; color: #fff; cursor: pointer;
+         background: var(--brand-grad); background-size: 200% 100%; box-shadow: 0 10px 24px #7c3aed44; transition: transform .2s, box-shadow .2s, background-position .6s; }
+  .run:hover { transform: translateY(-2px); box-shadow: 0 14px 30px #7c3aed66; background-position: 100% 0; }
+  .run:active { transform: translateY(0) scale(.98); }
+  .run.busy { pointer-events: none; }
+  .run.busy::after { content: ''; position: absolute; inset: 0; background: linear-gradient(110deg, transparent 30%, #ffffff55 50%, transparent 70%); animation: shimmer 1.2s infinite; }
+  @keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+  .stop { border: 0; border-radius: 12px; padding: 10px 22px; font: 600 14px Inter, system-ui; color: #fff; background: linear-gradient(90deg, #ef4444, #f97316); cursor: pointer; box-shadow: 0 8px 20px #ef444444; transition: transform .2s; }
+  .stop:hover { transform: translateY(-2px); }
+  .stop:disabled { opacity: .35; box-shadow: none; transform: none; cursor: default; }
+
+  .pill { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; padding: 3px 12px; border-radius: 99px; color: #fff; }
+  .pill.base { background: var(--base-grad); } .pill.wm { background: var(--wm-grad); }
+  .cols { display: grid; grid-template-columns: 1fr 2px 1fr; gap: 0 24px; }
+  .divider { background: linear-gradient(180deg, transparent, var(--base-b), var(--wm-a), transparent); border-radius: 2px; }
+  .lane-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+  .status { font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 99px; transition: all .3s; }
+  .status.running { background: #fef3c7; color: #92400e; }
+  .status.running::before { content: ''; display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: #f59e0b; margin-right: 6px; animation: pulse 1s infinite; }
+  .status.pass { background: #dcfce7; color: var(--good); animation: pop .5s cubic-bezier(.2,1.6,.4,1); }
+  .status.fail { background: #fee2e2; color: var(--bad); animation: pop .5s cubic-bezier(.2,1.6,.4,1); }
+  @keyframes pulse { 50% { opacity: .3; transform: scale(.7); } }
+  @keyframes pop { from { transform: scale(.4); opacity: 0; } }
+  .screen { position: relative; aspect-ratio: 16/10; border-radius: 14px; overflow: hidden; background: #e2e8f0; box-shadow: 0 10px 30px #0f172a1f; transition: box-shadow .4s; }
+  .screen.base.on { box-shadow: 0 0 0 2px var(--base-a), 0 12px 34px #0ea5e944; }
+  .screen.wm.on { box-shadow: 0 0 0 2px var(--wm-a), 0 12px 34px #7c3aed44; }
+  .screen img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; transition: opacity .45s; }
+  .live-dot { position: absolute; bottom: 10px; left: 10px; background: #0b1020cc; color: #fff; font-size: 11px; font-weight: 700; letter-spacing: .08em; padding: 3px 9px; border-radius: 99px; display: flex; align-items: center; gap: 6px; }
+  .live-dot::before { content: ''; width: 7px; height: 7px; border-radius: 50%; background: #ef4444; animation: pulse 1s infinite; }
+  .done-badge { position: absolute; inset: 0; display: grid; place-items: center; background: #0b102055; animation: fade .4s both; }
+  .done-badge span { background: #fff; border-radius: 16px; padding: 10px 18px; font-weight: 800; font-size: 18px; animation: pop .5s cubic-bezier(.2,1.6,.4,1) both; }
+  @keyframes fade { from { opacity: 0; } }
+  .progress { height: 6px; background: #eef1f7; border-radius: 99px; margin-top: 12px; overflow: hidden; }
+  .progress i { display: block; height: 100%; border-radius: 99px; transition: width .5s cubic-bezier(.2,.8,.2,1); }
+  .progress-label { font-size: 11px; color: var(--muted); margin-top: 4px; }
+
+  .board { max-width: 600px; margin: 24px auto; border-radius: 18px; padding: 2px; background: var(--brand-grad); box-shadow: 0 16px 40px #7c3aed33; }
+  .board-in { background: var(--night); border-radius: 16px; overflow: hidden; }
+  .board .r { display: grid; grid-template-columns: 1fr 110px 1fr; text-align: center; padding: 9px 6px; border-top: 1px solid #1e293b; font-variant-numeric: tabular-nums; }
+  .board .hd { border: 0; padding: 12px 6px; }
+  .board .hd b { font-size: 13px; }
+  .board .r span { font-size: 11px; color: #94a3b8; align-self: center; letter-spacing: .04em; text-transform: uppercase; }
+  .board .r b { font-size: 19px; color: #e2e8f0; transition: color .4s; display: inline-block; }
+  .board .r b.bump { animation: bump .35s; }
+  @keyframes bump { 40% { transform: scale(1.18); } }
+  .board .r b.lower { color: #4ade80; }
+  .board .r b.higher { color: #f87171; }
+
+  .feed { font: 12px/1.7 ui-monospace, monospace; height: 190px; overflow: auto; border-radius: 12px; padding: 8px 12px; background: #f8fafc; border: 1px solid var(--line); }
+  .feed div { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; animation: slidein .35s cubic-bezier(.2,.8,.2,1) both; }
+  @keyframes slidein { from { opacity: 0; transform: translateX(-14px); background: #ede9fe; } }
+  .feed .t { color: var(--muted); }
+  .feed .wmtool { color: var(--wm-a); font-weight: 700; }
+  .feed .fin { color: var(--good); font-weight: 700; }
+
+  .legend { display: flex; gap: 18px; font-size: 13px; font-weight: 600; margin-bottom: 8px; }
+  .legend i { display: inline-block; width: 26px; height: 10px; border-radius: 99px; margin-right: 8px; }
+  .summary-head { display: flex; align-items: baseline; gap: 14px; margin: 14px 0 4px; }
+  .summary-head h3 { margin: 0; }
+  .passes { display: flex; gap: 8px; }
+  .chip { font-size: 12px; font-weight: 700; padding: 3px 10px; border-radius: 99px; }
+  .chip.pass { background: #dcfce7; color: var(--good); } .chip.fail { background: #fee2e2; color: var(--bad); }
+  .metric { margin: 12px 0; max-width: 760px; }
+  .metric b.l { font-size: 13px; }
+  .brow { display: flex; align-items: center; gap: 10px; margin: 4px 0; font-variant-numeric: tabular-nums; }
+  .bar { height: 14px; border-radius: 99px; width: 0; min-width: 4px; transition: width 1s cubic-bezier(.2,.8,.2,1); }
+  .val { font-weight: 700; font-size: 13px; opacity: 0; transition: opacity .4s .5s; }
+  .val.lower { color: var(--good); } .val.higher { color: var(--bad); }
+  .shown .val { opacity: 1; }
+  .scen { border: 1px solid var(--line); border-radius: 14px; margin-top: 12px; overflow: hidden; transition: box-shadow .25s, border-color .25s; }
+  .scen:hover { border-color: #c4b5fd; box-shadow: 0 8px 22px #7c3aed1a; }
+  .scen-head { display: flex; align-items: center; gap: 14px; padding: 12px 16px; cursor: pointer; flex-wrap: wrap; }
+  .scen-head .chev { transition: transform .3s; color: var(--wm-a); font-weight: 900; font-size: 18px; }
+  .scen.open .chev { transform: rotate(90deg); }
+  .scen-head .id { font-weight: 700; min-width: 210px; }
+  .outc { display: flex; align-items: center; gap: 6px; font-size: 12px; }
+  .outc .reason { color: var(--muted); }
+  .scen-body { display: grid; grid-template-rows: 0fr; transition: grid-template-rows .45s cubic-bezier(.2,.8,.2,1); }
+  .scen.open .scen-body { grid-template-rows: 1fr; }
+  .scen-body > div { overflow: hidden; padding: 0 16px; }
+  .scen.open .scen-body > div { padding-bottom: 14px; }
+  .tools { font-size: 12px; color: var(--muted); }
+
+  @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation: none !important; transition: none !important; } }
+</style>
+</head>
+<body>
+<aside id="side">
+  <button class="toggle" onclick="side.classList.toggle('closed')" title="Collapse">☰</button>
+  <h3>Past Runs</h3>
+  <div class="list">
+    <div class="run-item"><b>Today 14:30</b>localhost:4000 · Haiku 5.5
+      <div class="mini"><span class="m" style="width:45px;background:var(--base-grad)"></span>3/4 <span class="m" style="width:60px;background:var(--wm-grad)"></span>4/4</div>
+      <div class="acts"><span>Open</span><span>Zip ⬇</span></div></div>
+    <div class="run-item"><b>Today 11:02</b>shop.example.com · gpt-6-luna
+      <div class="mini"><span class="m" style="width:30px;background:var(--base-grad)"></span>2/4 <span class="m" style="width:60px;background:var(--wm-grad)"></span>4/4</div>
+      <div class="acts"><span>Open</span><span>Zip ⬇</span></div></div>
+    <div class="run-item"><b>Yesterday 17:45</b>localhost:4000 · Sonnet 5.5
+      <div class="mini"><span class="m" style="width:60px;background:var(--base-grad)"></span>4/4 <span class="m" style="width:60px;background:var(--wm-grad)"></span>4/4</div>
+      <div class="acts"><span>Open</span><span>Zip ⬇</span></div></div>
+  </div>
+</aside>
+
+<main>
+  <div class="brand"><div class="logo"></div><h1>webMCP-comparer</h1></div>
+
+  <section class="card" id="setup">
+    <h2><span class="num">1</span>Setup</h2>
+    <div class="setup" id="setupBody">
+      <div>
+        <label class="f">Site URL</label><input class="t" value="http://localhost:4000">
+        <label class="f">Suite <span class="muted links" style="font-weight:400">· <a href="#">Upload .yaml</a> or edit below</span></label>
+        <textarea spellcheck="false">scenarios:
+  - id: cheapest-red-shirt-price
+    prompt: What does the cheapest red shirt cost?
+    success:
+      - answerContains: "19.99"
+  - id: add-red-shirt-to-cart
+    prompt: Add the cheapest red shirt in size M to the cart.
+    success:
+      - script: "shop.cart().some(i => i.productId === 'red-shirt-basic' &amp;&amp; i.size === 'M')"
+  - id: add-from-product-page
+    path: /products/blue-sneakers
+    prompt: Add these sneakers in size 42 to the cart.
+  - id: full-checkout
+    prompt: Buy one black hat and check out as Jane Doe ...</textarea>
+        <div class="valid">Valid Suite · 4 Scenarios</div>
+      </div>
+      <div>
+        <label class="f">Scenarios <span class="links" style="font-weight:400">· <a href="#">Select all</a> · <a href="#">Select none</a></span></label>
+        <div class="checks">
+          <label><input type="checkbox" checked> cheapest-red-shirt-price</label>
+          <label><input type="checkbox" checked> add-red-shirt-to-cart</label>
+          <label><input type="checkbox"> add-from-product-page</label>
+          <label><input type="checkbox"> full-checkout</label>
+        </div>
+        <div class="row">
+          <div><label class="f">Provider</label><select class="t"><option>Anthropic</option><option>OpenAI</option></select></div>
+          <div><label class="f">Model</label><select class="t"><option>Haiku 5.5 (recommended)</option><option>Sonnet 5.5 (ok)</option><option>Opus 5.5 (not recommended)</option></select></div>
+        </div>
+        <label class="f">API key</label><input class="t" value="Key loaded from .env ✔" disabled>
+        <div class="row">
+          <div><label class="f">Repeat</label><input class="t" value="1"></div>
+          <div><label class="f">Max steps</label><input class="t" value="50"></div>
+          <div><label class="f">Max min</label><input class="t" value="5"></div>
+          <div><label class="f">Max $</label><input class="t" value="2.00"></div>
+        </div>
+        <button class="run" id="runBtn" onclick="startRun()">Run ▶</button>
+      </div>
+    </div>
+  </section>
+
+  <section class="card hidden" id="live">
+    <h2><span class="num">2</span>Live <small id="liveTitle"></small></h2>
+    <div class="cols"><div id="lane-baseline"></div><div class="divider"></div><div id="lane-webmcp"></div></div>
+    <div class="board"><div class="board-in" id="board"></div></div>
+    <div class="cols"><div class="feed" id="feed-baseline"></div><div class="divider"></div><div class="feed" id="feed-webmcp"></div></div>
+    <p style="margin:18px 0 0"><button class="stop" id="stopBtn" onclick="finish(true)">Stop</button></p>
+  </section>
+
+  <section class="card hidden" id="results">
+    <h2><span class="num">3</span>Results</h2>
+    <div id="resultsBody"></div>
+  </section>
+</main>
+
+<script>
+const SCRIPTS = {
+  baseline: [
+    [0.6, 'model', 3100], [0.7, 'screenshot', {}, 'home'], [1.6, 'model', 4600], [1.7, 'read_page', {}],
+    [2.8, 'model', 7900], [2.9, 'type', { selector: 'input[name=query]', text: 'shirt' }], [3.0, 'select', { selector: 'select[name=color]', value: 'red' }],
+    [3.1, 'click', { text: 'Search' }, 'search'], [4.2, 'model', 8800], [4.3, 'screenshot', {}],
+    [5.4, 'model', 10400], [5.5, 'click', { text: 'Red shirt basic' }, 'product'], [6.6, 'model', 11900], [6.7, 'screenshot', {}],
+    [7.8, 'model', 13600], [7.9, 'select', { selector: 'select[name=size]', value: 'M' }], [8.0, 'click', { text: 'Add to cart' }, 'added'],
+    [9.1, 'model', 15200], [9.2, 'screenshot', {}], [10.3, 'model', 16100], [10.4, 'finish', { success: true }],
+  ],
+  webmcp: [
+    [0.6, 'model', 3900], [0.7, 'search_products', { query: 'shirt', color: 'red' }],
+    [1.7, 'model', 4700], [1.8, 'add_to_cart', { productId: 'red-shirt-basic', size: 'M' }, 'home-cart1'],
+    [2.8, 'model', 5300], [2.9, 'finish', { success: true }],
+  ],
+};
+const WEBMCP_TOOLS = ['search_products', 'add_to_cart', 'get_product', 'view_cart', 'checkout'];
+const PRICE_IN = 0.10 / 1e6, PRICE_OUT = 0.50 / 1e6, MAX_STEPS = 50;
+const LANES = [['baseline', 'Baseline', 'base'], ['webmcp', 'WebMCP', 'wm']];
+const int = (n) => Math.round(n).toLocaleString('en-US');
+const METRICS = [['durationMs', 'Time', (m) => (m / 1000).toFixed(1) + ' s'], ['steps', 'Steps', int], ['tokens', 'Tokens', int],
+  ['costUsd', 'Cost', (c) => '$' + c.toFixed(4)], ['toolCalls', 'Tool calls', int], ['screenshots', 'Screenshots', int]];
+
+const RESULTS = {
+  summary: {
+    baseline: { pass: 1, of: 2, durationMs: 21400, steps: 17, tokens: 148200, costUsd: 0.0157, toolCalls: 21, screenshots: 9 },
+    webmcp: { pass: 2, of: 2, durationMs: 5300, steps: 5, tokens: 21800, costUsd: 0.0023, toolCalls: 3, screenshots: 0 },
+  },
+  scenarios: [
+    { id: 'cheapest-red-shirt-price',
+      baseline: { outcome: 'fail', reason: 'check failed: answerContains "19.99"', durationMs: 11000, steps: 8, tokens: 59000, costUsd: 0.0062, toolCalls: 9, screenshots: 5, tools: { screenshot: 5, read_page: 2, type: 1, click: 1 } },
+      webmcp: { outcome: 'pass', durationMs: 2400, steps: 2, tokens: 8600, costUsd: 0.0009, toolCalls: 1, screenshots: 0, tools: { search_products: 1 } } },
+    { id: 'add-red-shirt-to-cart',
+      baseline: { outcome: 'pass', durationMs: 10400, steps: 9, tokens: 89200, costUsd: 0.0095, toolCalls: 12, screenshots: 4, tools: { screenshot: 4, read_page: 1, type: 1, select: 2, click: 3 } },
+      webmcp: { outcome: 'pass', durationMs: 2900, steps: 3, tokens: 13200, costUsd: 0.0014, toolCalls: 2, screenshots: 0, tools: { search_products: 1, add_to_cart: 1 } } },
+  ],
+};
+
+const $ = (id) => document.getElementById(id);
+const better = (mine, other) => (mine < other ? 'lower' : mine > other ? 'higher' : '');
+const fmtInput = (i) => Object.entries(i).map(([k, v]) => `${k}: ${JSON.stringify(v)}`).join(', ');
+let state, timer, t0, shown;
+
+const fresh = () => {
+  const lane = () => ({ t: 0, steps: 0, tokens: 0, cost: 0, toolCalls: 0, shots: 0, frame: 'home', feed: [], done: false });
+  return { baseline: lane(), webmcp: lane() };
+};
+const metricsOf = (L) => ({ durationMs: L.t * 1000, steps: L.steps, tokens: L.tokens, costUsd: L.cost, toolCalls: L.toolCalls, screenshots: L.shots });
+
+// Live section is built once per Run and updated in place, so CSS animations play instead of restarting.
+function buildLive() {
+  $('liveTitle').textContent = 'Scenario 2 of 2 · add-red-shirt-to-cart · Attempt 1 of 1';
+  for (const [k, label, cls] of LANES) {
+    $('lane-' + k).innerHTML = `<div class="lane-head"><span class="pill ${cls}">${label}</span><span class="status running" id="st-${k}">running</span></div>
+      <div class="screen ${cls} on" id="scr-${k}"><img id="img-${k}" src="frames/home.jpg" data-frame="home"><span class="live-dot" id="ld-${k}">LIVE</span></div>
+      <div class="progress"><i id="pg-${k}" style="width:0;background:var(--${cls}-grad)"></i></div>
+      <div class="progress-label" id="pgl-${k}">Step 0 of ${MAX_STEPS}</div>`;
+    $('feed-' + k).innerHTML = '<span class="muted">waiting for first tool call…</span>';
+  }
+  $('board').innerHTML = `<div class="r hd"><b style="color:var(--base-b)">Baseline</b><span>live</span><b style="color:#c4b5fd">WebMCP</b></div>
+    ${METRICS.map(([key, l]) => `<div class="r"><b id="bd-baseline-${key}">0</b><span>${l}</span><b id="bd-webmcp-${key}">0</b></div>`).join('')}`;
+  shown = { baseline: {}, webmcp: {} };
+}
+
+function setFrame(k, frame) {
+  const img = $('img-' + k);
+  if (img.dataset.frame === frame) return;
+  img.dataset.frame = frame;
+  const next = img.cloneNode(); next.id = ''; next.src = `frames/${frame}.jpg`; next.style.opacity = 0;
+  img.after(next);
+  requestAnimationFrame(() => requestAnimationFrame(() => { next.style.opacity = 1; }));
+  setTimeout(() => { img.src = next.src; next.remove(); }, 470);
+}
+
+function updateLive() {
+  const m = { baseline: metricsOf(state.baseline), webmcp: metricsOf(state.webmcp) };
+  for (const [k] of LANES) {
+    const L = state[k], other = k === 'baseline' ? 'webmcp' : 'baseline';
+    setFrame(k, L.frame);
+    $('pg-' + k).style.width = (L.steps / MAX_STEPS * 100) + '%';
+    $('pgl-' + k).textContent = `Step ${L.steps} of ${MAX_STEPS}`;
+    for (const [key, , f] of METRICS) {
+      const el = $(`bd-${k}-${key}`), v = m[k][key];
+      el.textContent = f(v);
+      el.classList.remove('lower', 'higher');
+      if (better(v, m[other][key])) el.classList.add(better(v, m[other][key]));
+      if (key !== 'durationMs' && shown[k][key] !== undefined && shown[k][key] !== v) { el.classList.remove('bump'); void el.offsetWidth; el.classList.add('bump'); }
+      shown[k][key] = v;
+    }
+    const feed = $('feed-' + k), have = feed.querySelectorAll('div').length;
+    if (L.feed.length > have) {
+      if (!have) feed.innerHTML = '';
+      for (const e of L.feed.slice(have)) {
+        const d = document.createElement('div');
+        const cls = e.tool === 'finish' ? 'fin' : WEBMCP_TOOLS.includes(e.tool) ? 'wmtool' : '';
+        d.innerHTML = `<span class="t">${e.at.toFixed(1)} s</span> <span class="${cls}">${e.tool}</span>(${fmtInput(e.input)})`;
+        feed.prepend(d);
+      }
+    }
+    if (L.done && !$('scr-' + k).querySelector('.done-badge')) {
+      const ok = L.outcome === 'pass';
+      $('st-' + k).className = 'status ' + L.outcome; $('st-' + k).textContent = ok ? '✔ Pass' : '✖ Fail';
+      $('scr-' + k).classList.remove('on'); $('ld-' + k)?.remove();
+      $('scr-' + k).insertAdjacentHTML('beforeend', `<div class="done-badge"><span style="color:var(--${ok ? 'good' : 'bad'})">${ok ? '✔ Pass' : '✖ ' + L.reason}</span></div>`);
+    }
+  }
+}
+
+function startRun() {
+  state = fresh(); t0 = performance.now();
+  $('setupBody').classList.add('locked');
+  $('runBtn').classList.add('busy'); $('runBtn').textContent = 'Running…';
+  $('results').classList.add('hidden');
+  buildLive(); reveal('live');
+  $('stopBtn').disabled = false;
+  const idx = { baseline: 0, webmcp: 0 };
+  clearInterval(timer);
+  timer = setInterval(() => {
+    const now = (performance.now() - t0) / 1000;
+    for (const [k] of LANES) {
+      const L = state[k], ev = SCRIPTS[k];
+      if (!L.done) L.t = now;
+      while (idx[k] < ev.length && ev[idx[k]][0] <= now) {
+        const [at, kind, arg, frame] = ev[idx[k]++];
+        if (kind === 'model') { L.steps++; L.tokens += arg + 140; L.cost += arg * PRICE_IN + 140 * PRICE_OUT; }
+        else if (kind === 'finish') { L.done = true; L.t = at; L.outcome = 'pass'; L.feed.push({ at, tool: 'finish', input: arg }); }
+        else { L.toolCalls++; L.feed.push({ at, tool: kind, input: arg }); if (kind === 'screenshot') L.shots++; if (frame) L.frame = frame; }
+      }
+    }
+    updateLive();
+    if (state.baseline.done && state.webmcp.done) finish(false);
+  }, 100);
+}
+
+function finish() {
+  clearInterval(timer);
+  for (const [k] of LANES) if (!state[k].done) Object.assign(state[k], { done: true, outcome: 'fail', reason: 'stopped by user' });
+  updateLive();
+  $('setupBody').classList.remove('locked');
+  $('runBtn').classList.remove('busy'); $('runBtn').textContent = 'Run ▶';
+  $('stopBtn').disabled = true;
+  setTimeout(() => { renderResults(); reveal('results'); }, 900);
+}
+
+function reveal(id) {
+  const s = $(id);
+  s.classList.remove('hidden', 'reveal'); void s.offsetWidth; s.classList.add('reveal');
+  setTimeout(() => s.scrollIntoView({ behavior: 'smooth', block: 'start' }), 80);
+}
+
+function bars(b, w) {
+  return METRICS.map(([k, l, f]) => {
+    const max = Math.max(b[k], w[k]) || 1;
+    return `<div class="metric"><b class="l">${l}</b>
+      <div class="brow"><div class="bar" data-w="${Math.max(0.6, b[k] / max * 78)}" style="background:var(--base-grad)"></div><span class="val ${better(b[k], w[k])}">${f(b[k])}</span></div>
+      <div class="brow"><div class="bar" data-w="${Math.max(0.6, w[k] / max * 78)}" style="background:var(--wm-grad)"></div><span class="val ${better(w[k], b[k])}">${f(w[k])}</span></div></div>`;
+  }).join('');
+}
+function grow(box) {
+  box.classList.remove('shown');
+  box.querySelectorAll('.bar').forEach((el) => { el.style.transition = 'none'; el.style.width = '0'; });
+  void box.offsetWidth;
+  box.querySelectorAll('.bar').forEach((el, i) => { el.style.transition = ''; el.style.transitionDelay = (i * 60) + 'ms'; el.style.width = el.dataset.w + '%'; });
+  box.classList.add('shown');
+}
+const outcome = (label, cls, r) => `<span class="outc"><span class="pill ${cls}">${label}</span><span class="chip ${r.outcome}">${r.outcome === 'pass' ? '✔ Pass' : '✖ Fail'}</span>${r.reason ? `<span class="reason">${r.reason}</span>` : ''}</span>`;
+function renderResults() {
+  const s = RESULTS.summary;
+  $('resultsBody').innerHTML = `<div class="legend"><span><i style="background:var(--base-grad)"></i>Baseline</span><span><i style="background:var(--wm-grad)"></i>WebMCP</span></div>
+    <div class="summary-head"><h3>Run summary</h3><div class="passes">
+      <span class="chip ${s.baseline.pass === s.baseline.of ? 'pass' : 'fail'}">Baseline ${s.baseline.pass}/${s.baseline.of} passed</span>
+      <span class="chip ${s.webmcp.pass === s.webmcp.of ? 'pass' : 'fail'}">WebMCP ${s.webmcp.pass}/${s.webmcp.of} passed</span></div></div>
+    <div id="sumBars">${bars(s.baseline, s.webmcp)}</div>
+    ${RESULTS.scenarios.map((sc, i) => `<div class="scen" id="sc-${i}">
+      <div class="scen-head" onclick="toggleScen(${i})"><span class="chev">›</span><span class="id">${sc.id}</span>${outcome('Baseline', 'base', sc.baseline)}${outcome('WebMCP', 'wm', sc.webmcp)}</div>
+      <div class="scen-body"><div><div class="sb">${bars(sc.baseline, sc.webmcp)}</div>
+        <p class="tools">Attempt 1 tool calls · Baseline: ${Object.entries(sc.baseline.tools).map(([t, n]) => `${t} ×${n}`).join(', ')} · WebMCP: ${Object.entries(sc.webmcp.tools).map(([t, n]) => `${t} ×${n}`).join(', ')}</p></div></div></div>`).join('')}`;
+  setTimeout(() => grow($('sumBars')), 250);
+}
+function toggleScen(i) {
+  const el = $('sc-' + i);
+  el.classList.toggle('open');
+  if (el.classList.contains('open')) setTimeout(() => grow(el.querySelector('.sb')), 120);
+}
+</script>
+</body>
+</html>
