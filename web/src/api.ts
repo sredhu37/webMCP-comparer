@@ -119,11 +119,76 @@ export interface RunInfo {
   error: string | null;
 }
 
-/** results.json; the Results section (#28) reads more of it than this declares. */
+/** Token buckets; `reasoning` is part of `output`, `screenshotEstimate` part of the input buckets. */
+export interface Tokens {
+  input: number;
+  cacheRead: number;
+  cacheWrite: number;
+  output: number;
+  reasoning: number;
+  screenshotEstimate: number;
+}
+
+/** The metric fields shared by an Attempt, a Run summary and a Scenario comparison. */
+export interface MetricValues {
+  durationMs: number;
+  steps: number;
+  tokens: Tokens;
+  /** Null when a Step could not be priced. */
+  costUsd: number | null;
+  toolCalls: Record<string, number>;
+  toolCallsTotal: number;
+  screenshots: number;
+}
+
+/** Sums over every Attempt of the Lane in the Run. */
+export interface LaneSummary extends MetricValues {
+  pass: number;
+  fail: number;
+}
+
+export type Outcome = 'pass' | 'fail';
+
+export interface LaneAttempt extends MetricValues {
+  outcome: Outcome;
+  reason: string | null;
+  answer: string | null;
+  webmcpTools: string[];
+}
+
+export interface AttemptRecord {
+  attempt: number;
+  baseline: LaneAttempt;
+  webmcp: LaneAttempt;
+}
+
+/** Means over the finished Attempts; `passRate`, `min` and `max` when the Run has Attempts > 1. */
+export interface LaneComparison extends MetricValues {
+  attempts: number;
+  pass: number;
+  fail: number;
+  passRate?: number;
+  min?: MetricValues;
+  max?: MetricValues;
+  webmcpTools: string[];
+}
+
+export type ScenarioStatus = 'pending' | 'running' | 'done' | 'stopped' | 'skipped';
+
+export interface ScenarioResult {
+  id: string;
+  prompt: string;
+  startUrl: string;
+  status: ScenarioStatus;
+  comparison: Record<LaneId, LaneComparison> | null;
+  attempts: AttemptRecord[];
+}
+
+/** results.json, as `GET /api/runs/:id` serves it. */
 export interface Results {
   run: RunInfo;
-  summary: Record<LaneId, PassCount>;
-  scenarios: { id: string; status: string }[];
+  summary: Record<LaneId, LaneSummary>;
+  scenarios: ScenarioResult[];
   suite: { source: string };
 }
 

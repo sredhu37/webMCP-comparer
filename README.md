@@ -44,7 +44,9 @@ Cost is approximate: token buckets times the rates in [`server/pricing/prices.js
 
 ## UI
 
-One page on http://localhost:3000: Past Runs in the sidebar, then Setup, Live and Results. The Suite editor is Monaco, bundled locally, and validates with the same parser as the server. `server/web-ui.test.ts` boots a production build in headless Chromium; `UI_SCREENSHOT=docs/screenshots/setup.png npx vitest run server/web-ui.test.ts` also refreshes [the Setup screenshot](docs/screenshots/setup.png).
+One page on http://localhost:3000: Past Runs in the sidebar, then Setup, Live and Results. The Suite editor is Monaco, bundled locally, and validates with the same parser as the server. Live follows the Run over `GET /api/live`: both Lanes' screens, Step meters, a scoreboard (lower value green, higher red) and each Lane's tool-call log, newest first, with WebMCP tools marked. Results shows the Run summary as paired bars per metric and every Scenario collapsed to its Pass/Fail per Lane; with Attempts > 1 it shows averages with min, max and pass rate. Opening a past Run shows each Lane's last screenshot in Live.
+
+`server/web-ui.test.ts` boots a production build in headless Chromium and runs a real Run on the demo shop with a scripted model; `UI_SCREENSHOT_DIR=docs/screenshots npx vitest run server/web-ui.test.ts` also refreshes the screenshots of [Setup](docs/screenshots/setup.png), [Live](docs/screenshots/live.png) and [Results](docs/screenshots/results.png).
 
 ## Runs
 

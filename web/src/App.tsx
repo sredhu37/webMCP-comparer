@@ -8,6 +8,9 @@ import {
   type RunListItem,
 } from './api.ts';
 import { Icon } from './components/Icon.tsx';
+import { LiveConnection, emptyLiveState, type LiveState } from './live/client.ts';
+import { FrameBus } from './live/frames.ts';
+import { runningRunId } from './live/view.ts';
 import { LiveSection } from './sections/LiveSection.tsx';
 import { ResultsSection } from './sections/ResultsSection.tsx';
 import { formFromResults, initialForm, setupReducer } from './setup/form.ts';
@@ -20,8 +23,6 @@ interface Boot {
   keys: KeysInfo;
 }
 
-/** How often the Run list is read while a Run is going, to notice its end. */
-const RUN_POLL_MS = 2000;
 const SIDEBAR_KEY = 'webmcp-comparer:sidebar';
 
 export function App() {
@@ -78,13 +79,36 @@ function Workspace({ defaults, models, keys: initialKeys }: Boot) {
   const [keys, setKeys] = useState(initialKeys);
   const [runs, setRuns] = useState<RunListItem[] | null>(null);
   const [runsError, setRunsError] = useState<string | null>(null);
-  const [runningId, setRunningId] = useState<string | null>(null);
+  // A Run this page started, until the live state knows it.
+  const [startedId, setStartedId] = useState<string | null>(null);
   const [stoppingId, setStoppingId] = useState<string | null>(null);
   const [results, setResults] = useState<Results | null>(null);
+  // A past Run opened from the sidebar, shown in Live with its last screenshots.
+  const [past, setPast] = useState<Results | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(
     () => window.localStorage.getItem(SIDEBAR_KEY) !== 'closed',
   );
+  const [live, setLive] = useState<LiveState>(emptyLiveState);
+  const [frames] = useState(() => new FrameBus());
+  const runningId = runningRunId(live, startedId);
+
+  // One live connection for the page: Run and Lane state, and each Lane's frames.
+  useEffect(() => {
+    let runId: string | null = null;
+    const connection = new LiveConnection({
+      onState: (state) => {
+        const id = state.run?.id ?? null;
+        if (id !== runId) {
+          runId = id;
+          frames.clear();
+        }
+        setLive(state);
+      },
+      onFrame: (lane, jpeg) => frames.push(lane, jpeg),
+    });
+    return () => connection.close();
+  }, [frames]);
 
   const syncRuns = useCallback(
     () =>
@@ -92,7 +116,8 @@ function Workspace({ defaults, models, keys: initialKeys }: Boot) {
         (list) => {
           setRuns(list.runs);
           setRunsError(null);
-          setRunningId(list.running);
+          // The server is not running the Run this page started (it ended, or the server restarted).
+          if (list.running === null) setStartedId(null);
         },
         (error: unknown) => setRunsError(errorText(error)),
       ),
@@ -103,11 +128,11 @@ function Workspace({ defaults, models, keys: initialKeys }: Boot) {
     void syncRuns();
   }, [syncRuns]);
 
+  // Every Run-level live event (start, next Scenario, end) refreshes Past Runs: no polling.
+  const liveRun = live.run;
   useEffect(() => {
-    if (!runningId) return;
-    const timer = window.setInterval(() => void syncRuns(), RUN_POLL_MS);
-    return () => window.clearInterval(timer);
-  }, [runningId, syncRuns]);
+    if (liveRun) void syncRuns();
+  }, [liveRun, syncRuns]);
 
   // When the Run ends, show its results and pick up a key the server now keeps for the session.
   const previousRun = useRef<string | null>(null);
@@ -115,14 +140,16 @@ function Workspace({ defaults, models, keys: initialKeys }: Boot) {
     const ended = previousRun.current;
     previousRun.current = runningId;
     if (!ended || ended === runningId) return;
+    setStartedId(null);
     api.run(ended).then(setResults, (error: unknown) => setNotice(errorText(error)));
     api.keys().then(setKeys, () => undefined);
   }, [runningId]);
 
   function onStarted(id: string) {
     setResults(null);
+    setPast(null);
     setNotice(null);
-    setRunningId(id);
+    setStartedId(id);
     void syncRuns();
     api.keys().then(setKeys, () => undefined);
   }
@@ -142,6 +169,7 @@ function Workspace({ defaults, models, keys: initialKeys }: Boot) {
       (opened) => {
         dispatch({ type: 'load', form: formFromResults(opened, models) });
         setResults(opened);
+        setPast(opened);
       },
       (error: unknown) => setNotice(`Could not open Run ${id}: ${errorText(error)}`),
     );
@@ -187,7 +215,10 @@ function Workspace({ defaults, models, keys: initialKeys }: Boot) {
           onStarted={onStarted}
         />
         <LiveSection
-          runId={runningId}
+          live={live}
+          frames={frames}
+          runningId={runningId}
+          past={past}
           stopping={stoppingId !== null && stoppingId === runningId}
           onStop={stop}
         />

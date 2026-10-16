@@ -49,7 +49,12 @@ const DEFAULT_USAGE: Required<ScriptedUsage> = {
  */
 export function scriptedModel(
   replies: ScriptedReply[] | ((index: number) => ScriptedReply),
-  options: { provider?: Provider; modelId?: string } = {},
+  options: {
+    provider?: Provider;
+    modelId?: string;
+    /** Each reply waits this long first (aborted with the call), to make Steps take time. */
+    delayMs?: number;
+  } = {},
 ): ScriptedModel {
   const provider = options.provider ?? 'anthropic';
   const modelId = options.modelId ?? (provider === 'anthropic' ? 'claude-haiku-5-5' : 'gpt-6-luna');
@@ -64,11 +69,12 @@ export function scriptedModel(
   const mock = new MockLanguageModelV4({
     provider: `${provider}.mock`,
     modelId,
-    doStream: (call) => {
+    doStream: async (call) => {
+      if (options.delayMs) await delay(options.delayMs, call.abortSignal);
       const reply = next();
-      if ('error' in reply) return Promise.reject(reply.error);
-      if ('hang' in reply) return Promise.resolve({ stream: hangingStream(call.abortSignal) });
-      return Promise.resolve({ stream: convertArrayToReadableStream(replyParts(reply, index)) });
+      if ('error' in reply) throw reply.error;
+      if ('hang' in reply) return { stream: hangingStream(call.abortSignal) };
+      return { stream: convertArrayToReadableStream(replyParts(reply, index)) };
     },
   });
   return { provider, modelId, model: mock, mock, calls: mock.doStreamCalls };
@@ -132,6 +138,24 @@ function replyParts(
     },
   });
   return parts;
+}
+
+function delay(ms: number, signal: AbortSignal | undefined): Promise<void> {
+  return new Promise((resolve, reject) => {
+    if (signal?.aborted) {
+      reject(signal.reason as Error);
+      return;
+    }
+    const timer = setTimeout(() => {
+      signal?.removeEventListener('abort', abort);
+      resolve();
+    }, ms);
+    const abort = (): void => {
+      clearTimeout(timer);
+      reject(signal?.reason as Error);
+    };
+    signal?.addEventListener('abort', abort, { once: true });
+  });
 }
 
 /** A response stream that stays silent until the call is aborted. */

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { Results } from '../api.ts';
-import { DEFAULTS, KEYS_IN_ENV, MODELS, SUITE } from '../testing/fixtures.ts';
+import { DEFAULTS, KEYS_IN_ENV, MODELS, SUITE, laneSummary } from '../testing/fixtures.ts';
 import {
   formFromResults,
   initialForm,
@@ -172,7 +172,7 @@ describe('formFromResults', () => {
         stoppedByUser: false,
         error: null,
       },
-      summary: { baseline: { pass: 1, fail: 1 }, webmcp: { pass: 2, fail: 0 } },
+      summary: { baseline: laneSummary(1, 1), webmcp: laneSummary(2, 0) },
       scenarios: [],
       suite: { source: SUITE },
     };

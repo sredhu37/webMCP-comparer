@@ -5,13 +5,96 @@ import type { FastifyInstance } from 'fastify';
 import { chromium, type Browser, type Page } from 'playwright';
 import { build } from 'vite';
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
+import type { LaneId } from './lane/browser.ts';
 import { createApp } from './app.ts';
 import { viteConfigFile } from './paths.ts';
+import { bundledPriceTable } from './pricing/price-table.ts';
+import { startDemoShop, type RunningDemoShop } from './testing/demo-shop.ts';
+import { scriptedModel, type ScriptedReply } from './testing/scripted-model.ts';
 
 /**
  * Smoke test of the web UI: a production build of web/ served by the real app server, in
- * headless Chromium. Set UI_SCREENSHOT=<path> to also save a screenshot of the page.
+ * headless Chromium, with real Lanes on the demo shop driven by a scripted model. Set
+ * UI_SCREENSHOT_DIR=<folder> to also save setup.png, live.png and results.png there.
  */
+
+const screenshotDir = process.env.UI_SCREENSHOT_DIR;
+
+/** Saves a screenshot of one section with a margin of page around it. */
+async function sectionScreenshot(page: Page, selector: string, file: string): Promise<void> {
+  if (!screenshotDir) return;
+  await page.mouse.move(0, 999);
+  const section = page.locator(selector);
+  await section.scrollIntoViewIfNeeded();
+  const box = await section.boundingBox();
+  if (!box) throw new Error(`${selector} is not visible`);
+  const margin = 24;
+  await page.screenshot({
+    path: join(screenshotDir, file),
+    fullPage: true,
+    clip: {
+      x: Math.max(0, box.x - margin),
+      y: Math.max(0, box.y + Number(await page.evaluate('window.scrollY')) - margin),
+      width: box.width + margin * 2,
+      height: box.height + margin * 2,
+    },
+  });
+}
+
+const okFetch = (() =>
+  Promise.resolve(new Response('{"data":[]}', { status: 200 }))) as typeof globalThis.fetch;
+
+const finish = (success: boolean, answer: string): ScriptedReply => ({
+  toolCalls: [{ name: 'finish', input: { success, answer } }],
+});
+
+/** What the scripted model does per Lane, Scenario and Attempt. */
+function script(lane: LaneId, scenario: string, attempt: number): ScriptedReply[] {
+  if (scenario === 'cheapest-red-shirt-price') {
+    if (lane === 'webmcp') {
+      return [
+        { toolCalls: [{ name: 'search_products', input: { color: 'red', category: 'shirts' } }] },
+        finish(true, 'The cheapest red shirt costs 19.99 EUR.'),
+      ];
+    }
+    return [
+      ...(attempt === 1 ? [{ toolCalls: [{ name: 'read_page' }] }] : []),
+      {
+        toolCalls: [
+          { name: 'type', input: { target: { selector: 'input[name=query]' }, text: 'shirt' } },
+        ],
+      },
+      {
+        toolCalls: [
+          { name: 'select', input: { target: { selector: 'select[name=color]' }, value: 'red' } },
+        ],
+      },
+      {
+        toolCalls: [
+          { name: 'click', input: { target: { selector: 'form.filters button[type=submit]' } } },
+        ],
+      },
+      { toolCalls: [{ name: 'screenshot' }] },
+      finish(true, 'The cheapest red shirt costs 19.99 EUR.'),
+    ];
+  }
+  if (lane === 'webmcp') {
+    return [
+      ...(attempt === 2
+        ? [{ toolCalls: [{ name: 'search_products', input: { color: 'red', size: 'M' } }] }]
+        : []),
+      {
+        toolCalls: [{ name: 'add_to_cart', input: { productId: 'red-shirt-basic', size: 'M' } }],
+      },
+      finish(true, 'Added the red shirt in M to the cart.'),
+    ];
+  }
+  return [
+    { toolCalls: [{ name: 'navigate', input: { url: '/products/red-shirt-basic' } }] },
+    { toolCalls: [{ name: 'screenshot' }] },
+    finish(false, 'I could not choose size M.'),
+  ];
+}
 
 interface PastRunFixture {
   id: string;
@@ -56,7 +139,24 @@ const PAST_RUNS: PastRunFixture[] = [
 ];
 
 async function writePastRun(runsDir: string, fixture: PastRunFixture): Promise<void> {
-  const lane = ([pass, fail]: [number, number]) => ({ pass, fail });
+  const lane = ([pass, fail]: [number, number]) => ({
+    pass,
+    fail,
+    durationMs: 0,
+    steps: 0,
+    tokens: {
+      input: 0,
+      cacheRead: 0,
+      cacheWrite: 0,
+      output: 0,
+      reasoning: 0,
+      screenshotEstimate: 0,
+    },
+    costUsd: 0,
+    toolCalls: {},
+    toolCallsTotal: 0,
+    screenshots: 0,
+  });
   const results = {
     run: {
       id: fixture.id,
@@ -93,6 +193,7 @@ describe('web UI', () => {
   let page: Page;
   let tmp: string;
   let url: string;
+  let shop: RunningDemoShop;
 
   beforeAll(async () => {
     tmp = await mkdtemp(join(tmpdir(), 'webmcp-comparer-ui-'));
@@ -104,9 +205,24 @@ describe('web UI', () => {
       build: { outDir: webDist, emptyOutDir: true },
     });
     for (const fixture of PAST_RUNS) await writePastRun(runsDir, fixture);
+    shop = await startDemoShop();
     app = await createApp({
       webDist,
-      runs: { runsDir, env: { ANTHROPIC_API_KEY: 'placeholder-not-a-real-key' } },
+      runs: {
+        runsDir,
+        env: { ANTHROPIC_API_KEY: 'placeholder-not-a-real-key' },
+        // The key check answers OK without a network call; the Lanes get the scripted model.
+        fetch: okFetch,
+        loadPriceTable: () => Promise.resolve({ ...bundledPriceTable(), override: null }),
+        createModel: ({ lane, scenario, attempt }) =>
+          scriptedModel(script(lane, scenario, attempt), { delayMs: 450 }),
+        laneOptions: {
+          browser: { actionTimeoutMs: 3_000, navigationTimeoutMs: 5_000 },
+          toolTimeouts: { waitForTextMs: 2_000, pauseMs: 100 },
+          webmcpCallTimeoutMs: 2_000,
+          maxRetries: 0,
+        },
+      },
     });
     await app.listen({ host: '127.0.0.1', port: 0 });
     const address = app.server.address();
@@ -119,6 +235,7 @@ describe('web UI', () => {
   afterAll(async () => {
     await browser?.close();
     await app?.close();
+    await shop?.close();
     await rm(tmp, { recursive: true, force: true });
   });
 
@@ -161,11 +278,10 @@ describe('web UI', () => {
     expect(await items.first().textContent()).toContain('Haiku 5.5');
     expect(await items.nth(1).textContent()).toContain('shop.example.com/de');
 
-    const screenshot = process.env.UI_SCREENSHOT;
-    if (screenshot) {
+    if (screenshotDir) {
       await page.evaluate('document.fonts.ready');
       await page.mouse.move(0, 999);
-      await page.screenshot({ path: screenshot, fullPage: true });
+      await page.screenshot({ path: join(screenshotDir, 'setup.png'), fullPage: true });
     }
   }, 120_000);
 
@@ -195,13 +311,108 @@ describe('web UI', () => {
     expect(await page.getByRole('button', { name: 'Run 2 Scenarios' }).isEnabled()).toBe(true);
   }, 60_000);
 
-  it('opens a Past Run into Setup and Results', async () => {
+  it('runs a Run end to end: Live streams both Lanes, then Results shows the Scenarios', async () => {
+    await page.getByLabel('Site URL').fill(shop.baseUrl);
+    await page.getByLabel('Repeat').fill('2');
+    await page.getByRole('button', { name: 'Run 2 Scenarios, 2 Attempts each' }).click();
+
+    // Live: both Lanes with frames, Step meters, the scoreboard and the tool-call logs.
+    const live = page.locator('#live');
+    await live.getByText('Scenario 1 of 2').waitFor({ timeout: 30_000 });
+    expect(await live.textContent()).toContain('cheapest-red-shirt-price');
+    expect(await live.textContent()).toContain('Attempt 1 of 2');
+    await expect
+      .poll(() => live.locator('canvas[data-frame="drawn"]').count(), { timeout: 30_000 })
+      .toBe(2);
+    const baselineLog = page.getByRole('log', { name: 'Baseline tool calls, newest first' });
+    const webmcpLog = page.getByRole('log', { name: 'WebMCP tool calls, newest first' });
+    await expect
+      .poll(() => baselineLog.locator('.tool-row').count(), { timeout: 30_000 })
+      .toBeGreaterThanOrEqual(3);
+    await expect
+      .poll(() => webmcpLog.locator('.tool-row[data-source="webmcp"]').count())
+      .toBeGreaterThanOrEqual(1);
+    expect(await webmcpLog.locator('.tool-row').first().locator('.tool-name').textContent()).toBe(
+      'search_products',
+    );
+    // Newest first: the Baseline's latest call is above its first one.
+    const names = await baselineLog.locator('.tool-name').allTextContents();
+    expect(names.at(-1)).toBe('read_page');
+    expect(
+      await live.getByRole('meter', { name: 'Baseline Steps' }).getAttribute('aria-valuemax'),
+    ).toBe('50');
+    expect(await live.locator('.scoreboard tbody tr').count()).toBe(6);
+    expect(await live.getByRole('button', { name: 'Stop Run' }).isEnabled()).toBe(true);
+    await sectionScreenshot(page, '#live', 'live.png');
+
+    // Results, once the Run ends: one row per Scenario, collapsed, with the verdicts.
+    const results = page.locator('#results');
+    await results.getByRole('heading', { name: 'Run summary' }).waitFor({ timeout: 120_000 });
+    expect(await live.getByText('Run ended').count()).toBe(1);
+    expect(await live.getByRole('button', { name: 'Stop Run' }).count()).toBe(0);
+    expect(await results.textContent()).toContain('Baseline passed 2/4');
+    expect(await results.textContent()).toContain('WebMCP passed 4/4');
+    const rows = results.locator('.scenario-row');
+    expect(await rows.count()).toBe(2);
+    expect(await rows.nth(0).locator('.scenario-name').textContent()).toBe(
+      'cheapest-red-shirt-price',
+    );
+    const verdicts = await rows.nth(1).locator('.scenario-verdict').allTextContents();
+    expect(verdicts[0]).toMatch(/^BaselineFail 0\/2Attempt 2: /);
+    expect(verdicts[1]).toBe('WebMCPPass 2/2');
+    expect(await results.locator('.scenario-body').count()).toBe(0);
+
+    await rows.nth(0).getByRole('button').click();
+    const body = rows.nth(0).locator('.scenario-body');
+    expect(await body.textContent()).toContain('Averages over 2 Attempts');
+    expect(await body.locator('.attempt-table tbody tr').count()).toBe(2);
+    expect(await body.locator('[data-metric="steps"] .bar-range').count()).toBe(2);
+    if (screenshotDir) {
+      // Let the bars finish growing.
+      await page.waitForTimeout(900);
+      await sectionScreenshot(page, '#results', 'results.png');
+    }
+  }, 180_000);
+
+  it('opens a Past Run into Setup, Live and Results', async () => {
     await page.getByRole('button', { name: 'Open Run 2026-10-15_11-02-41' }).click();
-    await page.getByRole('heading', { name: 'Results' }).waitFor();
+    // Results already shows the Run above; wait for the opened one.
+    await page.locator('#results').getByText('shop.example.com/de', { exact: false }).waitFor();
     expect(await page.getByLabel('Site URL').inputValue()).toBe('https://shop.example.com/de');
     expect(await page.getByLabel('Provider').inputValue()).toBe('openai');
     expect(await page.getByLabel('Model').inputValue()).toBe('gpt-6-luna');
     expect(await page.getByLabel('API key').inputValue()).toBe('');
     expect(await page.locator('#results').textContent()).toContain('Baseline passed 1/2');
+    // The fixture Run took no screenshots: both screens show the empty state.
+    expect(await page.locator('#live').getByText('No screenshots in this Run').count()).toBe(2);
+  }, 60_000);
+
+  it("shows each Lane's last screenshot when a Run with screenshots is opened", async () => {
+    // The Run made above is the newest.
+    await page
+      .locator('.run-item')
+      .first()
+      .getByRole('button', { name: /^Open Run / })
+      .click();
+    const live = page.locator('#live');
+    await live.getByText('Past Run').waitFor();
+    const image = live.locator('.lane[data-lane="baseline"] img');
+    expect(await image.getAttribute('src')).toMatch(
+      /\/baseline\/screenshots\/004-add-red-shirt-to-cart-attempt-2\.jpg$/,
+    );
+    await expect
+      .poll(() =>
+        image.evaluate((element) => {
+          const img = element as unknown as { complete: boolean; naturalWidth: number };
+          return img.complete ? img.naturalWidth : 0;
+        }),
+      )
+      .toBeGreaterThan(0);
+    expect(
+      await live
+        .locator('.lane[data-lane="webmcp"]')
+        .getByText('No screenshots in this Run')
+        .count(),
+    ).toBe(1);
   }, 60_000);
 });
