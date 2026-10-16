@@ -1,0 +1,151 @@
+body {
+  margin: 0;
+  color: #222;
+  font-family: system-ui, sans-serif;
+}
+
+header {
+  display: flex;
+  gap: 24px;
+  align-items: center;
+  padding: 14px 24px;
+  background: #1f2937;
+  color: #fff;
+}
+
+header a {
+  color: #fff;
+  text-decoration: none;
+}
+
+header .brand {
+  font-weight: 700;
+  font-size: 20px;
+}
+
+header .cart {
+  margin-left: auto;
+}
+
+main {
+  max-width: 1000px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+form.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+}
+
+form.filters input,
+form.filters select {
+  padding: 6px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px;
+}
+
+.card {
+  padding: 12px;
+  border: 1px solid #ddd;
+  border-radius: 8px;
+}
+
+.card a {
+  color: inherit;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.card p {
+  margin: 6px 0;
+}
+
+.product-image {
+  display: block;
+  border-radius: 6px;
+}
+
+.product {
+  display: flex;
+  gap: 32px;
+}
+
+.swatch {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 1px solid #999;
+  border-radius: 50%;
+  vertical-align: middle;
+}
+
+.price {
+  font-size: 18px;
+}
+
+.total {
+  font-weight: 700;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+td,
+th {
+  padding: 8px;
+  border-bottom: 1px solid #eee;
+  text-align: left;
+}
+
+td a {
+  color: inherit;
+}
+
+button,
+a.button {
+  display: inline-block;
+  padding: 8px 14px;
+  border: 1px solid #767676;
+  border-radius: 4px;
+  background: #efefef;
+  color: #222;
+  font: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+label {
+  display: block;
+  margin: 10px 0 4px;
+}
+
+input[type='text'],
+input[type='email'] {
+  width: 320px;
+  padding: 6px;
+}
+
+#debug {
+  position: fixed;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  padding: 6px 10px;
+  border-top: 1px solid #e0c200;
+  background: #fffbe6;
+  font: 12px monospace;
+  white-space: pre-wrap;
+}
+
+#debug[hidden] {
+  display: none;
+}

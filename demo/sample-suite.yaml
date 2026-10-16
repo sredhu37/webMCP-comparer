@@ -1,0 +1,18 @@
+scenarios:
+  - id: cheapest-red-shirt-price
+    prompt: What does the cheapest red shirt cost?
+    success:
+      - answerContains: "19.99"
+  - id: add-red-shirt-to-cart
+    prompt: Add the cheapest red shirt in size M to the cart.
+    success:
+      - script: "shop.cart().some(i => i.productId === 'red-shirt-basic' && i.size === 'M')"
+  - id: add-from-product-page
+    path: /products/blue-sneakers
+    prompt: Add these sneakers in size 42 to the cart.
+    success:
+      - script: "shop.cart().some(i => i.productId === 'blue-sneakers' && i.size === '42')"
+  - id: full-checkout
+    prompt: Buy one black hat and check out as Jane Doe, jane@example.com, Hauptstr. 1, Düsseldorf.
+    success:
+      - script: "shop.lastOrder()?.items.some(i => i.productId === 'black-hat')"
