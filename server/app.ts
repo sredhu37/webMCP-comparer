@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import fastifyStatic from '@fastify/static';
 import Fastify, { type FastifyInstance } from 'fastify';
 import { runsDir, sampleSuiteFile, viteConfigFile, webDist } from './paths.ts';
+import { registerLiveTransport, type LiveHub, type LiveTransportOptions } from './live/live-hub.ts';
 import { registerRunApi } from './run/api.ts';
 import { ApiKeys } from './run/keys.ts';
 import { RunManager, type RunManagerOptions } from './run/orchestrator.ts';
@@ -12,6 +13,8 @@ declare module 'fastify' {
   interface FastifyInstance {
     /** The Run orchestrator, for the live transport. */
     runs: RunManager;
+    /** The live view: screencasts and live metrics over `GET /api/live` (WebSocket). */
+    live: LiveHub;
   }
 }
 
@@ -27,6 +30,7 @@ export interface AppOptions {
   /** Folder holding the production build of web/. */
   webDist?: string;
   runs?: RunApiAppOptions;
+  live?: Omit<LiveTransportOptions, 'refuseOtherUpgrades'>;
 }
 
 export async function createApp(options: AppOptions = {}): Promise<FastifyInstance> {
@@ -40,6 +44,10 @@ export async function createApp(options: AppOptions = {}): Promise<FastifyInstan
   app.decorate('runs', manager);
   app.addHook('preClose', () => manager.close());
   await registerRunApi(app, { manager, keys, sampleSuiteFile: suiteFile ?? sampleSuiteFile });
+  app.decorate(
+    'live',
+    registerLiveTransport(app, manager, { ...options.live, refuseOtherUpgrades: !options.dev }),
+  );
 
   if (options.dev) {
     await serveWithVite(app);

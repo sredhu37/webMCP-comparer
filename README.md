@@ -60,5 +60,8 @@ The app server's HTTP API:
 | `POST /api/runs/:id/stop`                   | Stop Run                                                                            |
 | `GET /api/runs/:id/zip`                     | The Run folder as a zip                                                             |
 | `GET /api/runs/:id/:lane/screenshots/:file` | One agent screenshot                                                                |
+| `GET /api/live` (WebSocket)                 | Live view: both Lanes' screens and live metrics                                     |
 
 `POST /api/preflight` and `POST /api/runs` take `{ siteUrl, suite, scenarioIds, model, apiKey?, attempts?, limits? }`, where `suite` is the YAML text and `limits` is `{ maxSteps, maxDurationMs, maxCostUsd }`. A pasted `apiKey` overrides `.env` for the rest of the server session once it passes the key check.
+
+`GET /api/live` streams each Lane's screen (Playwright screencast, JPEG, at most 10 fps per Lane) as binary messages of 1 Lane byte (0 Baseline, 1 WebMCP) plus the JPEG, and the live metrics as JSON messages. A new viewer first gets the current Run state and the last frame of each Lane. The message types live in `server/live/protocol.ts`; `web/src/live/client.ts` is the browser client.
