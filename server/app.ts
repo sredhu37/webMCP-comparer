@@ -3,19 +3,43 @@ import type { IncomingMessage, ServerResponse } from 'node:http';
 import { join } from 'node:path';
 import fastifyStatic from '@fastify/static';
 import Fastify, { type FastifyInstance } from 'fastify';
-import { viteConfigFile, webDist } from './paths.ts';
+import { runsDir, sampleSuiteFile, viteConfigFile, webDist } from './paths.ts';
+import { registerRunApi } from './run/api.ts';
+import { ApiKeys } from './run/keys.ts';
+import { RunManager, type RunManagerOptions } from './run/orchestrator.ts';
+
+declare module 'fastify' {
+  interface FastifyInstance {
+    /** The Run orchestrator, for the live transport. */
+    runs: RunManager;
+  }
+}
+
+export interface RunApiAppOptions extends Partial<Omit<RunManagerOptions, 'keys'>> {
+  /** Where API keys are read from; `.env` is loaded into `process.env` by main.ts. */
+  env?: Readonly<Record<string, string | undefined>>;
+  sampleSuiteFile?: string;
+}
 
 export interface AppOptions {
   /** Serve web/ through Vite with hot reload instead of the production build. */
   dev?: boolean;
   /** Folder holding the production build of web/. */
   webDist?: string;
+  runs?: RunApiAppOptions;
 }
 
 export async function createApp(options: AppOptions = {}): Promise<FastifyInstance> {
   const app = Fastify();
 
   app.get('/api/health', () => ({ ok: true }));
+
+  const { env, sampleSuiteFile: suiteFile, ...runOptions } = options.runs ?? {};
+  const keys = new ApiKeys(env ?? process.env);
+  const manager = new RunManager({ runsDir, ...runOptions, keys });
+  app.decorate('runs', manager);
+  app.addHook('preClose', () => manager.close());
+  await registerRunApi(app, { manager, keys, sampleSuiteFile: suiteFile ?? sampleSuiteFile });
 
   if (options.dev) {
     await serveWithVite(app);

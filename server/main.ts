@@ -1,4 +1,9 @@
+import { existsSync } from 'node:fs';
 import { createApp } from './app.ts';
+import { envFile } from './paths.ts';
+
+// API keys (ANTHROPIC_API_KEY, OPENAI_API_KEY) stay in this process's memory only.
+if (existsSync(envFile)) process.loadEnvFile(envFile);
 
 const port = 3000;
 const dev = process.argv.includes('--dev');

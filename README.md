@@ -41,3 +41,24 @@ Cost is approximate: token buckets times the rates in [`server/pricing/prices.js
 ```
 
 `npm run prices:check` compares the bundled table with the official pricing pages and prints every difference. It never writes files; update `prices.json` by hand.
+
+## Runs
+
+Each Run writes `runs/<start-time>/` (git-ignored): `results.json`, and a `baseline/` and a `webmcp/` folder, each with its Lane's `log.jsonl` and the agent's screenshots. `results.json` is rewritten after every Attempt, so an interrupted Run keeps its finished Attempts. API keys stay in server memory; `results.json` and the logs pass a redaction step.
+
+The app server's HTTP API:
+
+| Request                                     | What it does                                                                        |
+| ------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `GET /api/defaults`                         | Prefilled Site URL, sample Suite, model, Attempts and limits                        |
+| `GET /api/models`                           | The model lists with their labels and the default per provider                      |
+| `GET /api/keys`                             | Whether a key is set in `.env` or pasted this session, per provider (never the key) |
+| `POST /api/preflight`                       | Pre-Run checks: the key check and the WebMCP tools on each selected start page      |
+| `POST /api/runs`                            | Check the key and start a Run (409 while one is going)                              |
+| `GET /api/runs`                             | Past Runs, newest first                                                             |
+| `GET /api/runs/:id`                         | A Run's `results.json` (live while it runs)                                         |
+| `POST /api/runs/:id/stop`                   | Stop Run                                                                            |
+| `GET /api/runs/:id/zip`                     | The Run folder as a zip                                                             |
+| `GET /api/runs/:id/:lane/screenshots/:file` | One agent screenshot                                                                |
+
+`POST /api/preflight` and `POST /api/runs` take `{ siteUrl, suite, scenarioIds, model, apiKey?, attempts?, limits? }`, where `suite` is the YAML text and `limits` is `{ maxSteps, maxDurationMs, maxCostUsd }`. A pasted `apiKey` overrides `.env` for the rest of the server session once it passes the key check.
