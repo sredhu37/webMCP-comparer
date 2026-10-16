@@ -42,6 +42,10 @@ Cost is approximate: token buckets times the rates in [`server/pricing/prices.js
 
 `npm run prices:check` compares the bundled table with the official pricing pages and prints every difference. It never writes files; update `prices.json` by hand.
 
+## UI
+
+One page on http://localhost:3000: Past Runs in the sidebar, then Setup, Live and Results. The Suite editor is Monaco, bundled locally, and validates with the same parser as the server. `server/web-ui.test.ts` boots a production build in headless Chromium; `UI_SCREENSHOT=docs/screenshots/setup.png npx vitest run server/web-ui.test.ts` also refreshes [the Setup screenshot](docs/screenshots/setup.png).
+
 ## Runs
 
 Each Run writes `runs/<start-time>/` (git-ignored): `results.json`, and a `baseline/` and a `webmcp/` folder, each with its Lane's `log.jsonl` and the agent's screenshots. `results.json` is rewritten after every Attempt, so an interrupted Run keeps its finished Attempts. API keys stay in server memory; `results.json` and the logs pass a redaction step.

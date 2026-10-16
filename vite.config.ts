@@ -8,5 +8,7 @@ export default defineConfig({
   build: {
     outDir: webDist,
     emptyOutDir: true,
+    // Monaco is one lazily loaded chunk of about 3 MB, served from localhost.
+    chunkSizeWarningLimit: 4000,
   },
 });
