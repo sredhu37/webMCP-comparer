@@ -22,6 +22,39 @@ API keys can be pasted in the UI or put in `.env` (copy `.env.example`).
 
 `npm run live-check` makes one small call per model (effort medium, with a screenshot in a tool result) and prints the usage each provider reports. It uses the keys in the environment or `.env`, skips models without a key, and makes no calls when there is none. Name models to check only those: `npm run live-check -- claude-haiku-5-5`.
 
+## Writing a Suite
+
+A Suite is YAML with one list, `scenarios`. Each Scenario needs an `id` (lowercase, dashes) and a `prompt`; `path` (a start page on the Site URL) and `success` (checks) are optional. The Site URL, model, Repeat and limits are set in the UI, not in the file.
+
+```yaml
+scenarios:
+  - id: cheapest-red-shirt-price
+    prompt: What does the cheapest red shirt cost?
+    success:
+      - answerContains: '19.99'
+  - id: add-from-product-page
+    path: /products/blue-sneakers
+    prompt: Add these sneakers in size 42 to the cart.
+    success:
+      - script: "shop.cart().some(i => i.productId === 'blue-sneakers' && i.size === '42')"
+```
+
+Checks: `urlContains`, `textVisible`, `elementExists` (CSS selector), `script` (JS expression that must return `true`) and `answerContains` (the agent's `finish` answer). All must pass. Without `success`, the agent's own `finish(success)` decides.
+
+**Write checks about the outcome, not the route.** The WebMCP lane often finishes without visiting the pages a Baseline agent clicks through: `add_to_cart` changes the cart and stays on the current page. A check like `urlContains: /cart` would fail it unfairly; check the cart contents instead.
+
+## Reading results
+
+Results compares raw values side by side, Baseline against WebMCP, per Run and per Scenario: time, Steps (model calls), tokens, cost, tool calls and screenshots. Lower is shown green and higher red. Each Lane ends Pass, or Fail with a reason: `check failed: <check>`, `agent reported failure`, `step limit`, `time limit`, `cost limit`, `did not call finish`, `stopped by user` or `error: <message>`. Metrics are recorded for failed Lanes too. With Repeat above 1, values are averages with min, max and pass rate. The same numbers are in `runs/<start-time>/results.json`.
+
+## Known limits
+
+- Cost is approximate. Screenshot tokens are estimated, since neither provider reports them separately.
+- Only WebMCP tools on the main page are used; tools inside iframes are ignored.
+- The $ limit is checked after each Step, so a Lane can overshoot it by one Step.
+- WebMCP is experimental in Chromium (`--enable-features=WebMCP`); its behaviour may change between Playwright versions.
+- No Docker image and no command-line mode in v1.
+
 ## Demo shop
 
 `demo/` is a small clothing shop on http://localhost:4000 to compare against. It registers WebMCP tools (`search_products`, `get_product`, `add_to_cart`, `view_cart`, and a declarative `checkout` form on `/checkout`) when the browser supports WebMCP, and looks the same without it. Add `?debug` to any URL to see the WebMCP state, the registered tools and the cart. [`demo/sample-suite.yaml`](demo/sample-suite.yaml) is the sample Suite for it.
