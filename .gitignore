@@ -7,3 +7,6 @@ coverage/
 !.env.example
 .DS_Store
 *.log
+
+# Agent worktrees (one per task)
+.claude/worktrees/
