@@ -19,8 +19,9 @@
     "demo": "node demo/main.ts",
     "lint": "eslint . && prettier --check .",
     "format": "prettier --write .",
-    "typecheck": "tsc -p tsconfig.json && tsc -p web/tsconfig.json && tsc -p demo/shop/tsconfig.json",
+    "typecheck": "tsc -p tsconfig.json && tsc -p web/tsconfig.json && tsc -p demo/shop/tsconfig.json && tsc -p e2e/tsconfig.json",
     "test": "vitest run",
+    "e2e": "playwright test -c e2e",
     "prices:check": "node server/pricing/prices-check.ts",
     "live-check": "node server/agent/live-check.ts"
   },
@@ -50,6 +51,7 @@
   },
   "devDependencies": {
     "@eslint/js": "10.0.1",
+    "@playwright/test": "1.64.1",
     "@testing-library/dom": "10.4.2",
     "@testing-library/react": "16.3.3",
     "@testing-library/user-event": "14.6.8",

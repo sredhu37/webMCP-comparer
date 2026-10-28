@@ -11,6 +11,15 @@ Several agent sessions often run on this repo at the same time. Never edit in th
 - Keep the main checkout clean on `main`. If you find uncommitted work there, move it into a worktree first, then tell Sunny.
 - After the PR merges: `git worktree remove .claude/worktrees/<slug>` and delete the branch.
 
+## Definition of done
+
+A change is done only when all of these hold:
+
+1. `npm run lint`, `npm run typecheck` and `npm test` pass, with real output shown.
+2. For a UI change: a demo video exists (`/demo` locally; CI uploads it on the pull request).
+3. `ARCHITECTURE.md` is updated if structure changed. New terms go in `GLOSSARY.md`, hard decisions in `docs/adr/`.
+4. A handoff is written: what changed, what is verified, what is left (`/handoff`).
+
 ## Agent skills
 
 ### Issue tracker
@@ -20,3 +29,17 @@ Issues, the wayfinder map and its decision tickets live in GitHub Issues on `sre
 ### Domain docs
 
 Single-context: one `GLOSSARY.md` and `docs/adr/` at the repo root. See `docs/agents/domain.md`.
+
+### Triage labels
+
+Default five labels (`needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`). See `docs/agents/triage-labels.md`.
+
+### Which skill when
+
+- `/grill-with-docs`: before building, to align and extend the glossary.
+- `/wayfinder`: plan work too big for one session.
+- `/triage`: sort incoming issues.
+- `/demo`: record a video of the UI change just built.
+- `/handoff`: finish a task.
+
+The Matt Pocock plugin is enabled in `.claude/settings.json`. Install once per clone: `claude plugin install mattpocock-skills@claude-plugins-official --scope project`.
