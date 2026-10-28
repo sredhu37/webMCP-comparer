@@ -4,3 +4,5 @@ coverage/
 docs/
 package-lock.json
 demo/sample-suite.yaml
+e2e/test-results/
+e2e/demo-output/
